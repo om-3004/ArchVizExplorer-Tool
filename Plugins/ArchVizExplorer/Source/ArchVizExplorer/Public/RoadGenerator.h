@@ -20,7 +20,7 @@ public:
 	ARoadGenerator();
 
 	UFUNCTION(BlueprintCallable, Category = "RoadGenerator")
-	void GenerateCube(const FVector& Dimensions, UMaterialInterface* Material);
+	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset, UMaterialInterface* Material);
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "RoadGenerator")
 	UProceduralMeshComponent* ProceduralMeshComponent;

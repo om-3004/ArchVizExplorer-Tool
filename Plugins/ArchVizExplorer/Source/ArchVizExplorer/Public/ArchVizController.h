@@ -11,6 +11,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "ProceduralMeshComponent.h"
 #include "RoadGenerator.h"
+#include "Widgets/HomeWidget.h"
+#include "Widgets/RoadConstructionWidget.h"
 
 #include "ArchVizController.generated.h"
 
@@ -21,6 +23,12 @@ UCLASS()
 class ARCHVIZEXPLORER_API AArchVizController : public APlayerController
 {
 	GENERATED_BODY()
+
+	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+	FVector RoadDimensions;
+
+	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+	bool bIsInConstruction;
 
 	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
 	FHitResult HitResult;
@@ -47,8 +55,45 @@ class ARCHVIZEXPLORER_API AArchVizController : public APlayerController
 	UFUNCTION()
 	void GetRoadLocationOnClick();
 
+	UFUNCTION()
+	void GenerateNewRoad();
+
+	/*UFUNCTION()
+	void SelectRoad();*/
+
+	UFUNCTION()
+	void OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+	UFUNCTION()
+	void OnModeToggleBtnClicked();
+
+	UFUNCTION()
+	void OnWidthValueChanged(float InValue);
+
+	UFUNCTION()
+	void OnLocationXValueChanged(float InValue);
+
+	UFUNCTION()
+	void OnLocationYValueChanged(float InValue);
+
+	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+	UInputMappingContext* RoadConstructionIMC;
+
 protected:
 	virtual void SetupInputComponent() override;
+
+	UFUNCTION()
+	void SetupRoadConstructionInputs();
+
+	UPROPERTY()
+	UHomeWidget* HomeWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UHomeWidget> HomeWidgetClassRef;
+
+	UPROPERTY()
+	URoadConstructionWidget* RoadConstructionWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
 
 public:
 	AArchVizController();
