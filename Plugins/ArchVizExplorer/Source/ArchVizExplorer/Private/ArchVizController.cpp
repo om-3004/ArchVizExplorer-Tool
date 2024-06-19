@@ -3,9 +3,77 @@
 
 #include "ArchVizController.h"
 
-AArchVizController::AArchVizController() : getLocation{ true }, isFirstClick{ true }, bIsInConstruction{ true }
+AArchVizController::AArchVizController() : getLocation{ true }, isFirstClick{ true }
 {
 	
+}
+
+void AArchVizController::PreviewWall() {
+	FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, WallGeneratorActor);
+
+	FVector CursorWorldLocation;
+	FVector CursorWorldDirection;
+	DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, CursorWorldLocation, CursorWorldLocation + CursorWorldDirection * 10000, ECC_Visibility, TraceParams)) {
+		WallLocation = HitResult.Location;
+		if (WallGeneratorActor) {
+			WallGeneratorActor->SetActorLocation(WallLocation);
+			SnapActor(WallGeneratorActor->WallStaticMesh->GetBounds().GetBox().GetSize().Y / 2);
+		}
+	}
+}
+
+void AArchVizController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	//if (HomeWidget->ModeSelectionDropdown->GetSelectedOption() == FString("Building Construction")) {
+	if(CurrentSelectedMode == EModeSelected::BuildingConstruction && CurrentBuildingMode == EBuildingMode::Wall){
+		if (WallGeneratorActor) {
+			PreviewWall();
+		}
+		else {
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			WallGeneratorActor = GetWorld()->SpawnActor<AWallGenerator>(WallGeneratorActorRef, WallLocation, FRotator::ZeroRotator, SpawnParams);
+
+			WallGeneratorActor->GenerateWall(BuildingConstructionWidget->NoSegmentsValue->GetValue());
+		}
+	}
+}
+
+void AArchVizController::CreateWidgets() {
+	if (HomeWidgetClassRef) {
+		HomeWidget = CreateWidget<UHomeWidget>(this, HomeWidgetClassRef);
+		HomeWidget->AddToViewport();
+	}
+	if (RoadConstructionWidgetClassRef) {
+		RoadConstructionWidget = CreateWidget<URoadConstructionWidget>(this, RoadConstructionWidgetClassRef);
+	}
+	if (BuildingConstructionWidgetClassRef) {
+		BuildingConstructionWidget = CreateWidget<UBuildingConstructionWidget>(this, BuildingConstructionWidgetClassRef);
+	}
+}
+
+void AArchVizController::BindWidgets(){
+	if (HomeWidget && HomeWidgetClassRef) {
+		HomeWidget->ModeSelectionDropdown->OnSelectionChanged.AddDynamic(this, &AArchVizController::OnModeSelectionChanged);
+	}
+	if (RoadConstructionWidget && RoadConstructionWidgetClassRef) {
+		RoadConstructionWidget->ModeToggleBtn->OnClicked.AddDynamic(this, &AArchVizController::OnRoadModeToggleBtnClicked);
+		RoadConstructionWidget->WidthValue->OnValueChanged.AddDynamic(this, &AArchVizController::OnWidthValueChanged);
+		RoadConstructionWidget->LocationX->OnValueChanged.AddDynamic(this, &AArchVizController::OnLocationXValueChanged);
+		RoadConstructionWidget->LocationY->OnValueChanged.AddDynamic(this, &AArchVizController::OnLocationYValueChanged);
+		RoadConstructionWidget->NewRoadBtn->OnClicked.AddDynamic(this, &AArchVizController::GenerateNewRoad);
+	}
+	if (BuildingConstructionWidget && BuildingConstructionWidgetClassRef) {
+		BuildingConstructionWidget->NoSegmentsValue->OnValueChanged.AddDynamic(this, &AArchVizController::OnSegmentsChanged);
+		BuildingConstructionWidget->WallBtn->OnClicked.AddDynamic(this, &AArchVizController::OnWallBtnClicked);
+		BuildingConstructionWidget->DoorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDoorBtnClicked);
+		BuildingConstructionWidget->FloorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnFloorBtnClicked);
+		BuildingConstructionWidget->RoofBtn->OnClicked.AddDynamic(this, &AArchVizController::OnRoofBtnClicked);
+	}
 }
 
 void AArchVizController::BeginPlay() {
@@ -13,25 +81,8 @@ void AArchVizController::BeginPlay() {
 
 	bShowMouseCursor = true;
 
-	if (HomeWidgetClassRef) {
-		HomeWidget = CreateWidget<UHomeWidget>(this, HomeWidgetClassRef);
-		HomeWidget->AddToViewport();
-
-		if (HomeWidget && HomeWidget->ModeSelectionDropdown) {
-			HomeWidget->ModeSelectionDropdown->OnSelectionChanged.AddDynamic(this, &AArchVizController::OnModeSelectionChanged);
-		}
-	}
-	if (RoadConstructionWidgetClassRef) {
-		RoadConstructionWidget = CreateWidget<URoadConstructionWidget>(this, RoadConstructionWidgetClassRef);
-		
-		if (RoadConstructionWidget && RoadConstructionWidget->ModeToggleBtn) {
-			RoadConstructionWidget->ModeToggleBtn->OnClicked.AddDynamic(this, &AArchVizController::OnModeToggleBtnClicked);
-			RoadConstructionWidget->WidthValue->OnValueChanged.AddDynamic(this, &AArchVizController::OnWidthValueChanged);
-			RoadConstructionWidget->LocationX->OnValueChanged.AddDynamic(this, &AArchVizController::OnLocationXValueChanged);
-			RoadConstructionWidget->LocationY->OnValueChanged.AddDynamic(this, &AArchVizController::OnLocationYValueChanged);
-			RoadConstructionWidget->NewRoadBtn->OnClicked.AddDynamic(this, &AArchVizController::GenerateNewRoad);
-		}
-	}
+	CreateWidgets();
+	BindWidgets();
 }
 
 void AArchVizController::SetupInputComponent()
@@ -39,8 +90,10 @@ void AArchVizController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	SetupRoadConstructionInputs();
+	SetupWallConstructionInputs();
 }
 
+// Road Construction
 void AArchVizController::SetupRoadConstructionInputs()
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
@@ -51,13 +104,11 @@ void AArchVizController::SetupRoadConstructionInputs()
 		RoadConstructionIMC->MapKey(ClickforRoadConstruction, EKeys::LeftMouseButton);
 
 		EnhancedInputComponent->BindAction(ClickforRoadConstruction, ETriggerEvent::Completed, this, &AArchVizController::GetRoadLocationOnClick);
-
 	}
 }
-
 void AArchVizController::GetRoadLocationOnClick()
 {
-	if(bIsInConstruction){
+	if(CurrentRoadMode == ERodeMode::ConstructionMode){
 		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true);
 
 		FVector CursorWorldLocation;
@@ -83,6 +134,7 @@ void AArchVizController::GetRoadLocationOnClick()
 		}
 		else {
 			DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection);
+			Cast<UStaticMeshComponent>(HitResult.GetComponent());
 			if (GetWorld()->LineTraceSingleByChannel(HitResult, CursorWorldLocation, CursorWorldLocation + CursorWorldDirection * 10000, ECC_Visibility, TraceParams))
 			{
 				FVector ForwardVectorOfPrevRoad = (EndLocation - StartLocation).GetSafeNormal();
@@ -126,13 +178,6 @@ void AArchVizController::GetRoadLocationOnClick()
 		}
 	}
 }
-
-void AArchVizController::GenerateNewRoad()
-{
-	isFirstClick = true;
-	getLocation = true;
-}
-
 void AArchVizController::GenerateRoad()
 {
 	FActorSpawnParameters SpawnParams;
@@ -146,51 +191,195 @@ void AArchVizController::GenerateRoad()
 	RoadDimensions.X = FVector::Dist(StartLocation, EndLocation);
 	RoadDimensions.Y = 100;
 	RoadDimensions.Z = 2;
-	SpawnedActor->GenerateCube(FVector(RoadDimensions), FVector(0, 0, RoadDimensions.Z/2), Material);
+	SpawnedActor->GenerateCube(FVector(RoadDimensions), FVector(0, 0, RoadDimensions.Z / 2), Material);
 }
-
 float AArchVizController::FindAngleBetweenVectors(const FVector& Vec1, const FVector& Vec2)
 {
 	FVector NormalizedVec1 = Vec1.GetSafeNormal();
 	FVector NormalizedVec2 = Vec2.GetSafeNormal();
-
 	float DotProduct = FVector::DotProduct(NormalizedVec1, NormalizedVec2);
-
 	DotProduct = FMath::Clamp(DotProduct, -1.0f, 1.0f);
-
 	float AngleRadians = FMath::Acos(DotProduct);
-
 	float AngleDegrees = FMath::RadiansToDegrees(AngleRadians);
-
 	return AngleDegrees;
 }
 
+// Road Widget Bind Function
+void AArchVizController::GenerateNewRoad()
+{
+	isFirstClick = true;
+	getLocation = true;
+}
+void AArchVizController::OnWidthValueChanged(float InValue)
+{
+	if (RoadGeneratorActor) {
+		RoadGeneratorActor->SetActorScale3D(FVector(1, InValue / RoadDimensions.Y, 1));
+	}
+}
+void AArchVizController::OnLocationXValueChanged(float InValue)
+{
+	if (RoadGeneratorActor) {
+		RoadGeneratorActor->SetActorLocation(FVector(InValue, RoadGeneratorActor->GetActorLocation().Y, RoadGeneratorActor->GetActorLocation().Z));
+	}
+}
+void AArchVizController::OnLocationYValueChanged(float InValue)
+{
+	if (RoadGeneratorActor) {
+		RoadGeneratorActor->SetActorLocation(FVector(RoadGeneratorActor->GetActorLocation().X, InValue, RoadGeneratorActor->GetActorLocation().Z));
+	}
+}
+
+// Wall Construction
+void AArchVizController::SetupWallConstructionInputs()
+{
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
+		WallConstructionIMC = NewObject<UInputMappingContext>();
+
+		UInputAction* ClickforWallConstruction = NewObject<UInputAction>(this);
+		ClickforWallConstruction->ValueType = EInputActionValueType::Boolean;
+		WallConstructionIMC->MapKey(ClickforWallConstruction, EKeys::LeftMouseButton);
+
+		UInputAction* RotationforWall = NewObject<UInputAction>(this);
+		RotationforWall->ValueType = EInputActionValueType::Boolean;
+		WallConstructionIMC->MapKey(RotationforWall, EKeys::R);
+
+		EnhancedInputComponent->BindAction(ClickforWallConstruction, ETriggerEvent::Completed, this, &AArchVizController::BuildWallAtClick);
+		EnhancedInputComponent->BindAction(RotationforWall, ETriggerEvent::Completed, this, &AArchVizController::RotateWall);
+	}
+}
+void AArchVizController::BuildWallAtClick()
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	WallGeneratorActor = GetWorld()->SpawnActor<AWallGenerator>(WallGeneratorActorRef, WallLocation, FRotator::ZeroRotator, SpawnParams);
+
+	WallGeneratorActor->GenerateWall(BuildingConstructionWidget->NoSegmentsValue->GetValue());
+}
+void AArchVizController::RotateWall()
+{
+	WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));
+}
+void AArchVizController::SnapActor(float SnapValue)
+{
+	auto CurrentLocation = WallGeneratorActor->GetActorLocation();
+	CurrentLocation.X = FMath::RoundToFloat(CurrentLocation.X / SnapValue) * SnapValue;
+	CurrentLocation.Y = FMath::RoundToFloat(CurrentLocation.Y / SnapValue) * SnapValue;
+	WallGeneratorActor->SetActorLocation(CurrentLocation);
+}
+
+// Wall Widget Bind Function
+void AArchVizController::OnSegmentsChanged(float InValue)
+{
+	if(WallGeneratorActor){
+		WallGeneratorActor->GenerateWall(InValue);
+	}
+}
+
+// Home Widget Bind Function
+void AArchVizController::UpdateWidget() {
+	switch (CurrentSelectedMode) {
+		case EModeSelected::ViewMode:
+			if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
+			if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
+			break;
+		case EModeSelected::RoadConstruction:
+			if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
+			if (RoadConstructionWidgetClassRef) { RoadConstructionWidget->AddToViewport(); }
+			break;
+		case EModeSelected::BuildingConstruction:
+			if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
+			if (BuildingConstructionWidgetClassRef) { BuildingConstructionWidget->AddToViewport(); }
+			break;
+	}
+}
+void AArchVizController::UpdateBuildingMappings() {
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
+		Subsystem->ClearAllMappings();
+
+		switch (CurrentBuildingMode) {
+			case EBuildingMode::None:
+				break;
+			case EBuildingMode::Wall:
+				Subsystem->AddMappingContext(WallConstructionIMC, 0);
+				break;
+			case EBuildingMode::Door:
+				break;
+			case EBuildingMode::Floor:
+				break;
+			case EBuildingMode::Roof:
+				break;
+		}
+	}
+}
+void AArchVizController::UpdateInputMappings() {
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
+		Subsystem->ClearAllMappings();
+
+		switch (CurrentSelectedMode)
+		{
+			case EModeSelected::ViewMode:
+				break;
+			case EModeSelected::RoadConstruction:
+				Subsystem->AddMappingContext(RoadConstructionIMC, 0);
+				break;
+			case EModeSelected::BuildingConstruction:
+				UpdateBuildingMappings();
+				break;
+		}
+	}
+}
+void AArchVizController::SetDefaultMode() {
+	switch (CurrentSelectedMode) {
+		case EModeSelected::RoadConstruction:
+			RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
+			CurrentRoadMode = ERodeMode::ConstructionMode;
+			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
+			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+			RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
+			RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
+			break;
+		case EModeSelected::BuildingConstruction:
+			CurrentBuildingMode = EBuildingMode::None;
+			break;
+	}
+
+}
 void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
 	if (SelectedItem == FString("View Mode")) {
-		RoadConstructionWidget->RemoveFromParent();
+		CurrentSelectedMode = EModeSelected::ViewMode;
+		DestroyWallGeneratorActor();
 
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
-			Subsystem->ClearAllMappings();
-		}
+		UpdateWidget();
+		UpdateInputMappings();
 	}
 	else if (SelectedItem == FString("Road Construction")) {
-		if (RoadConstructionWidgetClassRef) {
-			RoadConstructionWidget->AddToViewport();
+		CurrentSelectedMode = EModeSelected::RoadConstruction;
+		SetDefaultMode();
+		
+		DestroyWallGeneratorActor();
 
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
-				Subsystem->ClearAllMappings();
-				Subsystem->AddMappingContext(RoadConstructionIMC, 0);
-			}
+		if (RoadConstructionWidgetClassRef) {
+			UpdateWidget();
+			UpdateInputMappings();
+		}
+	}
+	else if (SelectedItem == FString("Building Construction")) {
+		CurrentSelectedMode = EModeSelected::BuildingConstruction;
+
+		if(BuildingConstructionWidgetClassRef) {
+			UpdateWidget();
+			UpdateInputMappings();
 		}
 	}
 }
 
-void AArchVizController::OnModeToggleBtnClicked()
+void AArchVizController::OnRoadModeToggleBtnClicked()
 {
-	if (RoadConstructionWidget->ModeToggleBtnText->GetText().EqualTo(FText::FromString("Editor Mode"))) { // is in Construction Mode
-		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Construction Mode")); // switch to Editor Mode
-		bIsInConstruction = false;
+	FText CurrRoadModeText = RoadConstructionWidget->ModeToggleBtnText->GetText();
+	if (CurrentRoadMode == ERodeMode::ConstructionMode){
+		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Construction Mode"));
+		CurrentRoadMode = ERodeMode::EditorMode;
 
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Visible);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Visible);
@@ -199,8 +388,8 @@ void AArchVizController::OnModeToggleBtnClicked()
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 	}
 	else {
-		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Editor Mode"));
-		bIsInConstruction = true;
+		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
+		CurrentRoadMode = ERodeMode::ConstructionMode;
 
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
@@ -209,23 +398,35 @@ void AArchVizController::OnModeToggleBtnClicked()
 	}
 }
 
-void AArchVizController::OnWidthValueChanged(float InValue)
-{
-	if(RoadGeneratorActor) {
-		RoadGeneratorActor->SetActorScale3D(FVector(1, InValue / RoadDimensions.Y, 1));
+void AArchVizController::DestroyWallGeneratorActor() {
+	if (WallGeneratorActor) {
+		WallGeneratorActor->Destroy();
+		WallGeneratorActor = nullptr;
 	}
 }
 
-void AArchVizController::OnLocationXValueChanged(float InValue)
-{
-	if (RoadGeneratorActor) {
-		RoadGeneratorActor->SetActorLocation(FVector(InValue, RoadGeneratorActor->GetActorLocation().Y, RoadGeneratorActor->GetActorLocation().Z));
-	}
+void AArchVizController::OnWallBtnClicked(){
+	CurrentBuildingMode = EBuildingMode::Wall;
+	UpdateInputMappings();
 }
 
-void AArchVizController::OnLocationYValueChanged(float InValue)
-{
-	if (RoadGeneratorActor) {
-		RoadGeneratorActor->SetActorLocation(FVector(RoadGeneratorActor->GetActorLocation().X, InValue, RoadGeneratorActor->GetActorLocation().Z));
-	}
+void AArchVizController::OnDoorBtnClicked(){
+	CurrentBuildingMode = EBuildingMode::Door;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
+}
+
+void AArchVizController::OnFloorBtnClicked(){
+	CurrentBuildingMode = EBuildingMode::Floor;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
+}
+
+void AArchVizController::OnRoofBtnClicked(){
+	CurrentBuildingMode = EBuildingMode::Roof;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
 }

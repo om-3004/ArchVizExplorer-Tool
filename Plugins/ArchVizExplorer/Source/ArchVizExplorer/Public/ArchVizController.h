@@ -13,59 +13,167 @@
 #include "RoadGenerator.h"
 #include "Widgets/HomeWidget.h"
 #include "Widgets/RoadConstructionWidget.h"
+#include "Widgets/BuildingConstructionWidget.h"
+#include "WallGenerator.h"
 
 #include "ArchVizController.generated.h"
 
-/**
- * 
- */
+UENUM(BlueprintType)
+enum class EModeSelected : uint8 {
+	ViewMode,
+	RoadConstruction,
+	BuildingConstruction,
+	InteriorDesign,
+	MaterialSelection,
+};
+
+UENUM(BlueprintType)
+enum class ERodeMode : uint8 {
+	ConstructionMode,
+	EditorMode,
+};
+
+UENUM(BlueprintType)
+enum class EBuildingMode : uint8 {
+	None,
+	Wall,
+	Door,
+	Floor,
+	Roof,
+};
+
 UCLASS()
 class ARCHVIZEXPLORER_API AArchVizController : public APlayerController
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+public:
+	AArchVizController();
+
+protected:
+	virtual void SetupInputComponent() override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+
+	// Home Widget
+	UPROPERTY()
+	UHomeWidget* HomeWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UHomeWidget> HomeWidgetClassRef;
+
+	// Road Construction
+	UFUNCTION()
+	void SetupRoadConstructionInputs();
+	UPROPERTY()
+	URoadConstructionWidget* RoadConstructionWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
+
+	// Building Construction Widget
+	UPROPERTY()
+	UBuildingConstructionWidget* BuildingConstructionWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UBuildingConstructionWidget> BuildingConstructionWidgetClassRef;
+	
+	// Wall Construction
+	UFUNCTION()
+	void SetupWallConstructionInputs();
+
+private:
+	UPROPERTY()
+	EModeSelected CurrentSelectedMode;
+
+	UPROPERTY()
+	ERodeMode CurrentRoadMode;
+
+	UPROPERTY()
+	EBuildingMode CurrentBuildingMode;
+
+	// Road Construction
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
 	FVector RoadDimensions;
 
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
-	bool bIsInConstruction;
-
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
-	FHitResult HitResult;
-
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
-	FVector StartLocation;
-
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
-	FVector EndLocation;
-
-	UPROPERTY(EditDefaultsOnly, Category = "MyPlayerController")
-	ARoadGenerator* RoadGeneratorActor;
-
-	UPROPERTY(EditDefaultsOnly, Category = "MyPlayerController")
-	TSubclassOf<ARoadGenerator> RoadGeneratorActorRef;
-
-	UPROPERTY(EditDefaultsOnly, Category = "MyPlayerController")
-	UMaterialInterface* Material;
-
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
 	bool isFirstClick;
 
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
 	bool getLocation;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	FHitResult HitResult;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	FVector StartLocation;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	FVector EndLocation;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	ARoadGenerator* RoadGeneratorActor;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	TSubclassOf<ARoadGenerator> RoadGeneratorActorRef;
+
+	// Wall Construction
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	AWallGenerator* WallGeneratorActor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController")
+	TSubclassOf<AWallGenerator> WallGeneratorActorRef;
+
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController")
+	UMaterialInterface* Material;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
+	FVector WallLocation;
 
 	UFUNCTION()
 	void GetRoadLocationOnClick();
+	
+	UFUNCTION()
+	void BuildWallAtClick();
+
+	UFUNCTION()
+	void RotateWall();
 
 	UFUNCTION()
 	void GenerateNewRoad();
 
-	/*UFUNCTION()
-	void SelectRoad();*/
+	UFUNCTION()
+	void OnSegmentsChanged(float InValue);
+
+	UFUNCTION()
+	void OnWallBtnClicked();
+	
+	UFUNCTION()
+	void OnDoorBtnClicked();
+	
+	UFUNCTION()
+	void OnFloorBtnClicked();
+	
+	UFUNCTION()
+	void OnRoofBtnClicked();
+
+	UFUNCTION()
+	void UpdateWidget();
+
+	UFUNCTION()
+	void UpdateBuildingMappings();
+
+	UFUNCTION()
+	void UpdateInputMappings();
+
+	UFUNCTION()
+	void SetDefaultMode();
 
 	UFUNCTION()
 	void OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 
 	UFUNCTION()
-	void OnModeToggleBtnClicked();
+	void SnapActor(float SnapValue);
+
+	UFUNCTION()
+	void OnRoadModeToggleBtnClicked();
 
 	UFUNCTION()
 	void OnWidthValueChanged(float InValue);
@@ -76,32 +184,26 @@ class ARCHVIZEXPLORER_API AArchVizController : public APlayerController
 	UFUNCTION()
 	void OnLocationYValueChanged(float InValue);
 
+	UFUNCTION()
+	void DestroyWallGeneratorActor();
+
 	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
 	UInputMappingContext* RoadConstructionIMC;
 
-protected:
-	virtual void SetupInputComponent() override;
-
-	UFUNCTION()
-	void SetupRoadConstructionInputs();
-
-	UPROPERTY()
-	UHomeWidget* HomeWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
-	TSubclassOf<UHomeWidget> HomeWidgetClassRef;
-
-	UPROPERTY()
-	URoadConstructionWidget* RoadConstructionWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
-	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
-
-public:
-	AArchVizController();
-
-	virtual void BeginPlay() override;
+	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+	UInputMappingContext* WallConstructionIMC;
 
 	UFUNCTION()
 	void GenerateRoad();
+
+	UFUNCTION()
+	void PreviewWall();
+
+	UFUNCTION()
+	void CreateWidgets();
+
+	UFUNCTION()
+	void BindWidgets();
 
 	UFUNCTION()
 	float FindAngleBetweenVectors(const FVector& Vec1, const FVector& Vec2);

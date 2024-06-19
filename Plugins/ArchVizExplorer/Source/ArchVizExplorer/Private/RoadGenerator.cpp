@@ -112,10 +112,10 @@ void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	DrawTriangleFromVertex(21, 23, 22);
 
 	for (int32 i = 0; i < Vertices.Num(); i += 4) {
-		AddUV(FVector2D{ 0.0, 0.0 });
 		AddUV(FVector2D{ 0.0, 1.0 });
-		AddUV(FVector2D{ 1.0, 0.0 });
 		AddUV(FVector2D{ 1.0, 1.0 });
+		AddUV(FVector2D{ 0.0, 0.0 });
+		AddUV(FVector2D{ 1.0, 0.0 });
 	}
 
 	for (int32 i = 0; i < Vertices.Num(); i++) {
