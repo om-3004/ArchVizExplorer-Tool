@@ -9,9 +9,6 @@
 
 #include "HomeWidget.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class ARCHVIZEXPLORER_API UHomeWidget : public UUserWidget
 {

@@ -12,9 +12,6 @@
 
 #include "RoadConstructionWidget.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class ARCHVIZEXPLORER_API URoadConstructionWidget : public UUserWidget
 {

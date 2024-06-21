@@ -5,20 +5,22 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 
+#include "Components/HorizontalBox.h"
 #include "Components/SpinBox.h"
 #include "Components/Button.h"
+#include "ScrollBoxWidget.h"
 
 #include "BuildingConstructionWidget.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class ARCHVIZEXPLORER_API UBuildingConstructionWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
+
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* SegmentBox;
 	
 	UPROPERTY(meta = (BindWidget))
 	USpinBox* NoSegmentsValue;
@@ -34,4 +36,10 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UButton* RoofBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UScrollBoxWidget* WallScrollBoxWidget;
+	
+	UPROPERTY(meta = (BindWidget))
+	UScrollBoxWidget* DoorScrollBoxWidget;
 };

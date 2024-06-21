@@ -11,9 +11,14 @@
 #include "EnhancedInputSubsystems.h"
 #include "ProceduralMeshComponent.h"
 #include "RoadGenerator.h"
+
 #include "Widgets/HomeWidget.h"
 #include "Widgets/RoadConstructionWidget.h"
 #include "Widgets/BuildingConstructionWidget.h"
+
+//#include "DataAssets/WallDataAsset.h"
+//#include "DataAssets/DoorDataAsset.h"
+
 #include "WallGenerator.h"
 
 #include "ArchVizController.generated.h"
@@ -55,156 +60,142 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+private:
 	// Home Widget
 	UPROPERTY()
 	UHomeWidget* HomeWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	UPROPERTY(EditAnywhere, Category = "Widget Reference")
 	TSubclassOf<UHomeWidget> HomeWidgetClassRef;
+	UPROPERTY()
+	EModeSelected CurrentSelectedMode;
+	UPROPERTY()
+	ERodeMode CurrentRoadMode;
+	UPROPERTY()
+	EBuildingMode CurrentBuildingMode;
+	// Function - Home
+	UFUNCTION()
+	void UpdateWidget();
+	UFUNCTION()
+	void UpdateInputMappings();
+	UFUNCTION()
+	void CreateWidgets();
+	UFUNCTION()
+	void BindWidgets();
+	UFUNCTION()
+	void SetDefaultMode();
+	// Widget Bind Function - Home
+	UFUNCTION()
+	void OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 
 	// Road Construction
-	UFUNCTION()
-	void SetupRoadConstructionInputs();
 	UPROPERTY()
 	URoadConstructionWidget* RoadConstructionWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	UPROPERTY(EditAnywhere, Category = "Widget Reference")
 	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
+	UPROPERTY()
+	ARoadGenerator* RoadGeneratorActor;
+	UPROPERTY()
+	TSubclassOf<ARoadGenerator> RoadGeneratorActorRef;
+	UPROPERTY()
+	UInputMappingContext* RoadConstructionIMC;
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Road")
+	UMaterialInterface* RoadMaterial;
+	UPROPERTY()
+	FVector RoadDimensions;
+	UPROPERTY()
+	bool isFirstClick;
+	UPROPERTY()
+	bool getLocation;
+	UPROPERTY()
+	FHitResult HitResult;
+	UPROPERTY()
+	FVector StartLocation;
+	UPROPERTY()
+	FVector EndLocation;
+	// Function - Road
+	UFUNCTION()
+	void SetupRoadConstructionInputs();
+	UFUNCTION()
+	void GetRoadLocationOnClick();
+	UFUNCTION()
+	void GenerateRoad();
+	UFUNCTION()
+	float FindAngleBetweenVectors(const FVector& Vec1, const FVector& Vec2);
+	// Widget Bind Function - Road
+	UFUNCTION()
+	void OnRoadModeToggleBtnClicked();
+	UFUNCTION()
+	void GenerateNewRoad();
+	UFUNCTION()
+	void OnWidthValueChanged(float InValue);
+	UFUNCTION()
+	void OnLocationXValueChanged(float InValue);
+	UFUNCTION()
+	void OnLocationYValueChanged(float InValue);
 
 	// Building Construction Widget
 	UPROPERTY()
 	UBuildingConstructionWidget* BuildingConstructionWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	UPROPERTY(EditAnywhere, Category = "Widget Reference")
 	TSubclassOf<UBuildingConstructionWidget> BuildingConstructionWidgetClassRef;
-	
-	// Wall Construction
-	UFUNCTION()
-	void SetupWallConstructionInputs();
-
-private:
-	UPROPERTY()
-	EModeSelected CurrentSelectedMode;
-
-	UPROPERTY()
-	ERodeMode CurrentRoadMode;
-
-	UPROPERTY()
-	EBuildingMode CurrentBuildingMode;
-
-	// Road Construction
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	FVector RoadDimensions;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	bool isFirstClick;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	bool getLocation;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	FHitResult HitResult;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	FVector StartLocation;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	FVector EndLocation;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	ARoadGenerator* RoadGeneratorActor;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	TSubclassOf<ARoadGenerator> RoadGeneratorActorRef;
-
-	// Wall Construction
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	AWallGenerator* WallGeneratorActor;
-
-	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController")
-	TSubclassOf<AWallGenerator> WallGeneratorActorRef;
-
-	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController")
-	UMaterialInterface* Material;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "ArchVizController")
-	FVector WallLocation;
-
-	UFUNCTION()
-	void GetRoadLocationOnClick();
-	
-	UFUNCTION()
-	void BuildWallAtClick();
-
-	UFUNCTION()
-	void RotateWall();
-
-	UFUNCTION()
-	void GenerateNewRoad();
-
-	UFUNCTION()
-	void OnSegmentsChanged(float InValue);
-
-	UFUNCTION()
-	void OnWallBtnClicked();
-	
-	UFUNCTION()
-	void OnDoorBtnClicked();
-	
-	UFUNCTION()
-	void OnFloorBtnClicked();
-	
-	UFUNCTION()
-	void OnRoofBtnClicked();
-
-	UFUNCTION()
-	void UpdateWidget();
-
+	// Function - Building
 	UFUNCTION()
 	void UpdateBuildingMappings();
 
-	UFUNCTION()
-	void UpdateInputMappings();
-
-	UFUNCTION()
-	void SetDefaultMode();
-
-	UFUNCTION()
-	void OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
-
-	UFUNCTION()
-	void SnapActor(float SnapValue);
-
-	UFUNCTION()
-	void OnRoadModeToggleBtnClicked();
-
-	UFUNCTION()
-	void OnWidthValueChanged(float InValue);
-
-	UFUNCTION()
-	void OnLocationXValueChanged(float InValue);
-
-	UFUNCTION()
-	void OnLocationYValueChanged(float InValue);
-
-	UFUNCTION()
-	void DestroyWallGeneratorActor();
-
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
-	UInputMappingContext* RoadConstructionIMC;
-
-	UPROPERTY(VisibleDefaultsOnly,Category = "SelectionAreaController")
+	// Wall Construction
+	UPROPERTY()
+	AWallGenerator* WallGeneratorActor;
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Wall")
+	TSubclassOf<AWallGenerator> WallGeneratorActorRef;
+	UPROPERTY()
 	UInputMappingContext* WallConstructionIMC;
-
+	UPROPERTY()
+	FVector WallLocation;
+	// Function - Wall
 	UFUNCTION()
-	void GenerateRoad();
-
+	void SetupWallConstructionInputs();
 	UFUNCTION()
 	void PreviewWall();
-
 	UFUNCTION()
-	void CreateWidgets();
-
+	void BuildWallAtClick();
 	UFUNCTION()
-	void BindWidgets();
-
+	void RotateWall();
 	UFUNCTION()
-	float FindAngleBetweenVectors(const FVector& Vec1, const FVector& Vec2);
+	void DestroyWallGeneratorActor();
+	UFUNCTION()
+	void SnapActor(float SnapValue);
+	// Widget Bind Function - Wall
+	UFUNCTION()
+	void OnSegmentsChanged(float InValue);
+	UFUNCTION()
+	void OnWallBtnClicked();
+	UFUNCTION()
+	void SetWallStaticMesh(const FWallData& WallData);
+
+	// Door Construction
+	UPROPERTY()
+	UStaticMesh* DoorMesh{};
+	UPROPERTY()
+	UInputMappingContext* DoorConstructionIMC;
+	// Function - Door
+	UFUNCTION()
+	void SetupDoorConstructionInputs();
+	UFUNCTION()
+	void GenerateDoorOnClick();
+	// Widget Bind Function - Door
+	UFUNCTION()
+	void OnDoorBtnClicked();
+	UFUNCTION()
+	void SetDoorMesh(const FDoorData& DoorData);
+	
+	// Floor Construction
+	// Widget Bind Function - Floor
+	UFUNCTION()
+	void OnFloorBtnClicked();
+	
+	// Roof Construction
+	// Widget Bind Function - Roof
+	UFUNCTION()
+	void OnRoofBtnClicked();
+
 };

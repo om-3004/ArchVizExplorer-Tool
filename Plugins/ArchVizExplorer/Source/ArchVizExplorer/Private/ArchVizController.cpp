@@ -10,25 +10,22 @@ AArchVizController::AArchVizController() : getLocation{ true }, isFirstClick{ tr
 
 void AArchVizController::PreviewWall() {
 	FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, WallGeneratorActor);
-
 	FVector CursorWorldLocation;
 	FVector CursorWorldDirection;
-	DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection);
 
+	DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection);
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, CursorWorldLocation, CursorWorldLocation + CursorWorldDirection * 10000, ECC_Visibility, TraceParams)) {
 		WallLocation = HitResult.Location;
 		if (WallGeneratorActor) {
 			WallGeneratorActor->SetActorLocation(WallLocation);
-			SnapActor(WallGeneratorActor->WallStaticMesh->GetBounds().GetBox().GetSize().Y / 2);
+			if(WallGeneratorActor->WallStaticMesh) {SnapActor(WallGeneratorActor->WallStaticMesh->GetBounds().GetBox().GetSize().Y / 2);}
 		}
 	}
 }
-
 void AArchVizController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//if (HomeWidget->ModeSelectionDropdown->GetSelectedOption() == FString("Building Construction")) {
 	if(CurrentSelectedMode == EModeSelected::BuildingConstruction && CurrentBuildingMode == EBuildingMode::Wall){
 		if (WallGeneratorActor) {
 			PreviewWall();
@@ -55,7 +52,6 @@ void AArchVizController::CreateWidgets() {
 		BuildingConstructionWidget = CreateWidget<UBuildingConstructionWidget>(this, BuildingConstructionWidgetClassRef);
 	}
 }
-
 void AArchVizController::BindWidgets(){
 	if (HomeWidget && HomeWidgetClassRef) {
 		HomeWidget->ModeSelectionDropdown->OnSelectionChanged.AddDynamic(this, &AArchVizController::OnModeSelectionChanged);
@@ -73,9 +69,10 @@ void AArchVizController::BindWidgets(){
 		BuildingConstructionWidget->DoorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDoorBtnClicked);
 		BuildingConstructionWidget->FloorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnFloorBtnClicked);
 		BuildingConstructionWidget->RoofBtn->OnClicked.AddDynamic(this, &AArchVizController::OnRoofBtnClicked);
+		BuildingConstructionWidget->WallScrollBoxWidget->AfterWallSelection.BindUFunction(this, "SetWallStaticMesh");
+		BuildingConstructionWidget->DoorScrollBoxWidget->AfterDoorSelection.BindUFunction(this, "SetDoorMesh");
 	}
 }
-
 void AArchVizController::BeginPlay() {
 	Super::BeginPlay();
 
@@ -91,6 +88,109 @@ void AArchVizController::SetupInputComponent()
 
 	SetupRoadConstructionInputs();
 	SetupWallConstructionInputs();
+	SetupDoorConstructionInputs();
+}
+
+// Home Widget Bind Function
+void AArchVizController::UpdateWidget() {
+	switch (CurrentSelectedMode) {
+	case EModeSelected::ViewMode:
+		if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
+		if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
+		break;
+	case EModeSelected::RoadConstruction:
+		if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
+		if (RoadConstructionWidgetClassRef) { RoadConstructionWidget->AddToViewport(); }
+		break;
+	case EModeSelected::BuildingConstruction:
+		if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
+		if (BuildingConstructionWidgetClassRef) { BuildingConstructionWidget->AddToViewport(); }
+		break;
+	}
+}
+void AArchVizController::UpdateBuildingMappings() {
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
+		Subsystem->ClearAllMappings();
+
+		switch (CurrentBuildingMode) {
+		case EBuildingMode::None:
+			break;
+		case EBuildingMode::Wall:
+			Subsystem->AddMappingContext(WallConstructionIMC, 0);
+			break;
+		case EBuildingMode::Door:
+			Subsystem->AddMappingContext(DoorConstructionIMC, 0);
+			break;
+		case EBuildingMode::Floor:
+			break;
+		case EBuildingMode::Roof:
+			break;
+		}
+	}
+}
+void AArchVizController::UpdateInputMappings() {
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
+		Subsystem->ClearAllMappings();
+
+		switch (CurrentSelectedMode)
+		{
+		case EModeSelected::ViewMode:
+			break;
+		case EModeSelected::RoadConstruction:
+			Subsystem->AddMappingContext(RoadConstructionIMC, 0);
+			break;
+		case EModeSelected::BuildingConstruction:
+			UpdateBuildingMappings();
+			break;
+		}
+	}
+}
+void AArchVizController::SetDefaultMode() {
+	switch (CurrentSelectedMode) {
+	case EModeSelected::RoadConstruction:
+		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
+		CurrentRoadMode = ERodeMode::ConstructionMode;
+		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
+		break;
+	case EModeSelected::BuildingConstruction:
+		CurrentBuildingMode = EBuildingMode::None;
+		break;
+	}
+
+}
+void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+	if (SelectedItem == FString("View Mode")) {
+		CurrentSelectedMode = EModeSelected::ViewMode;
+		DestroyWallGeneratorActor();
+
+		UpdateWidget();
+		UpdateInputMappings();
+	}
+	else if (SelectedItem == FString("Road Construction")) {
+		CurrentSelectedMode = EModeSelected::RoadConstruction;
+		SetDefaultMode();
+
+		DestroyWallGeneratorActor();
+
+		if (RoadConstructionWidgetClassRef) {
+			UpdateWidget();
+			UpdateInputMappings();
+		}
+	}
+	else if (SelectedItem == FString("Building Construction")) {
+		CurrentSelectedMode = EModeSelected::BuildingConstruction;
+		CurrentBuildingMode = EBuildingMode::None;
+		DestroyWallGeneratorActor();
+
+		if (BuildingConstructionWidgetClassRef) {
+			UpdateWidget();
+			UpdateInputMappings();
+		}
+	}
 }
 
 // Road Construction
@@ -171,10 +271,16 @@ void AArchVizController::GetRoadLocationOnClick()
 		GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
 		if (Cast<ARoadGenerator>(HitResult.GetActor()))
 		{
+			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Visible);
+			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Visible);
 			RoadGeneratorActor = Cast<ARoadGenerator>(HitResult.GetActor());
 			RoadConstructionWidget->WidthValue->SetValue(RoadGeneratorActor->GetActorScale3D().Y * RoadDimensions.Y);
 			RoadConstructionWidget->LocationX->SetValue(RoadGeneratorActor->GetActorLocation().X);
 			RoadConstructionWidget->LocationY->SetValue(RoadGeneratorActor->GetActorLocation().Y);
+		}
+		else {
+			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
+			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 }
@@ -191,7 +297,7 @@ void AArchVizController::GenerateRoad()
 	RoadDimensions.X = FVector::Dist(StartLocation, EndLocation);
 	RoadDimensions.Y = 100;
 	RoadDimensions.Z = 2;
-	SpawnedActor->GenerateCube(FVector(RoadDimensions), FVector(0, 0, RoadDimensions.Z / 2), Material);
+	SpawnedActor->GenerateCube(FVector(RoadDimensions), FVector(0, 0, RoadDimensions.Z / 2), RoadMaterial);
 }
 float AArchVizController::FindAngleBetweenVectors(const FVector& Vec1, const FVector& Vec2)
 {
@@ -228,6 +334,66 @@ void AArchVizController::OnLocationYValueChanged(float InValue)
 		RoadGeneratorActor->SetActorLocation(FVector(RoadGeneratorActor->GetActorLocation().X, InValue, RoadGeneratorActor->GetActorLocation().Z));
 	}
 }
+void AArchVizController::OnRoadModeToggleBtnClicked()
+{
+	if (CurrentRoadMode == ERodeMode::ConstructionMode){
+		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Construction Mode"));
+		CurrentRoadMode = ERodeMode::EditorMode;
+
+		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Visible);
+		RoadConstructionWidget->RoadConstructionMsg->SetText(FText::FromString("Select the Road which you want to Edit."));
+		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Hidden);
+	}
+	else {
+		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
+		CurrentRoadMode = ERodeMode::ConstructionMode;
+
+		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+// Building Widget Bind Function
+void AArchVizController::OnWallBtnClicked(){
+	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Visible);
+	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Visible);
+	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	CurrentBuildingMode = EBuildingMode::Wall;
+	UpdateInputMappings();
+}
+void AArchVizController::OnDoorBtnClicked(){
+	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Visible);
+
+	CurrentBuildingMode = EBuildingMode::Door;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
+}
+void AArchVizController::OnFloorBtnClicked(){
+	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	CurrentBuildingMode = EBuildingMode::Floor;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
+}
+void AArchVizController::OnRoofBtnClicked(){
+	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	CurrentBuildingMode = EBuildingMode::Roof;
+	DestroyWallGeneratorActor();
+	UpdateInputMappings();
+
+}
 
 // Wall Construction
 void AArchVizController::SetupWallConstructionInputs()
@@ -259,6 +425,12 @@ void AArchVizController::RotateWall()
 {
 	WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));
 }
+void AArchVizController::DestroyWallGeneratorActor() {
+	if (WallGeneratorActor) {
+		WallGeneratorActor->Destroy();
+		WallGeneratorActor = nullptr;
+	}
+}
 void AArchVizController::SnapActor(float SnapValue)
 {
 	auto CurrentLocation = WallGeneratorActor->GetActorLocation();
@@ -267,166 +439,71 @@ void AArchVizController::SnapActor(float SnapValue)
 	WallGeneratorActor->SetActorLocation(CurrentLocation);
 }
 
-// Wall Widget Bind Function
+// Wall Bind Function
 void AArchVizController::OnSegmentsChanged(float InValue)
 {
 	if(WallGeneratorActor){
 		WallGeneratorActor->GenerateWall(InValue);
 	}
 }
-
-// Home Widget Bind Function
-void AArchVizController::UpdateWidget() {
-	switch (CurrentSelectedMode) {
-		case EModeSelected::ViewMode:
-			if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
-			if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
-			break;
-		case EModeSelected::RoadConstruction:
-			if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
-			if (RoadConstructionWidgetClassRef) { RoadConstructionWidget->AddToViewport(); }
-			break;
-		case EModeSelected::BuildingConstruction:
-			if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
-			if (BuildingConstructionWidgetClassRef) { BuildingConstructionWidget->AddToViewport(); }
-			break;
+void AArchVizController::SetWallStaticMesh(const FWallData& WallData) {
+	if (IsValid(WallGeneratorActor)) {
+		WallGeneratorActor->WallStaticMesh = WallData.StaticMesh;
+		WallGeneratorActor->GenerateWall(BuildingConstructionWidget->NoSegmentsValue->GetValue());
 	}
 }
-void AArchVizController::UpdateBuildingMappings() {
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
-		Subsystem->ClearAllMappings();
 
-		switch (CurrentBuildingMode) {
-			case EBuildingMode::None:
-				break;
-			case EBuildingMode::Wall:
-				Subsystem->AddMappingContext(WallConstructionIMC, 0);
-				break;
-			case EBuildingMode::Door:
-				break;
-			case EBuildingMode::Floor:
-				break;
-			case EBuildingMode::Roof:
-				break;
-		}
+// Door Construction
+void AArchVizController::SetupDoorConstructionInputs() {
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
+		DoorConstructionIMC = NewObject<UInputMappingContext>();
+
+		UInputAction* ClickforDoorConstruction = NewObject<UInputAction>(this);
+		ClickforDoorConstruction->ValueType = EInputActionValueType::Boolean;
+		DoorConstructionIMC->MapKey(ClickforDoorConstruction, EKeys::LeftMouseButton);
+
+		EnhancedInputComponent->BindAction(ClickforDoorConstruction, ETriggerEvent::Completed, this, &AArchVizController::GenerateDoorOnClick);
 	}
 }
-void AArchVizController::UpdateInputMappings() {
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
-		Subsystem->ClearAllMappings();
+void AArchVizController::GenerateDoorOnClick() {
+	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
 
-		switch (CurrentSelectedMode)
-		{
-			case EModeSelected::ViewMode:
-				break;
-			case EModeSelected::RoadConstruction:
-				Subsystem->AddMappingContext(RoadConstructionIMC, 0);
-				break;
-			case EModeSelected::BuildingConstruction:
-				UpdateBuildingMappings();
-				break;
-		}
-	}
-}
-void AArchVizController::SetDefaultMode() {
-	switch (CurrentSelectedMode) {
-		case EModeSelected::RoadConstruction:
-			RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
-			CurrentRoadMode = ERodeMode::ConstructionMode;
-			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
-			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
-			RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
-			RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
-			break;
-		case EModeSelected::BuildingConstruction:
-			CurrentBuildingMode = EBuildingMode::None;
-			break;
-	}
+	if (AWallGenerator * WallTempActor = Cast<AWallGenerator>(HitResult.GetActor())) {
+		if (UStaticMeshComponent* DoorComponent = Cast<UStaticMeshComponent>(HitResult.GetComponent())) {
+			if (DoorMesh) {
+				UProceduralMeshComponent* CubeComponent = NewObject<UProceduralMeshComponent>(WallTempActor);
+				float DoorHeight = DoorMesh->GetBounds().GetBox().GetSize().Z;
+				FVector WallDimensions = DoorComponent->GetStaticMesh()->GetBounds().GetBox().GetSize();
 
-}
-void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
-{
-	if (SelectedItem == FString("View Mode")) {
-		CurrentSelectedMode = EModeSelected::ViewMode;
-		DestroyWallGeneratorActor();
+				if (WallDimensions.Z == WallTempActor->HeightOfWall) {
+					FVector DoorLocation = DoorComponent->GetRelativeLocation();
+					DoorLocation.Z -= (WallDimensions.Z / 2);
 
-		UpdateWidget();
-		UpdateInputMappings();
-	}
-	else if (SelectedItem == FString("Road Construction")) {
-		CurrentSelectedMode = EModeSelected::RoadConstruction;
-		SetDefaultMode();
-		
-		DestroyWallGeneratorActor();
+					FVector CubeDimensions = { WallDimensions.X, WallDimensions.Y, WallDimensions.Z - DoorHeight };
+					FVector CubeLocation = { DoorLocation.X, DoorLocation.Y, DoorLocation.Z + DoorHeight + ((WallDimensions.Z - DoorHeight) / 2)};
 
-		if (RoadConstructionWidgetClassRef) {
-			UpdateWidget();
-			UpdateInputMappings();
-		}
-	}
-	else if (SelectedItem == FString("Building Construction")) {
-		CurrentSelectedMode = EModeSelected::BuildingConstruction;
+					DoorComponent->SetRelativeRotation(FRotator(0, 90, 0));
+					DoorComponent->SetRelativeLocation(DoorLocation);
+					DoorComponent->SetStaticMesh(DoorMesh);
 
-		if(BuildingConstructionWidgetClassRef) {
-			UpdateWidget();
-			UpdateInputMappings();
+					CubeComponent->SetupAttachment(WallTempActor->GetRootComponent());
+					CubeComponent->RegisterComponentWithWorld(GetWorld());
+
+					WallTempActor->GenerateCube(CubeDimensions, FVector::ZeroVector, CubeComponent);
+
+					CubeComponent->SetRelativeLocation(CubeLocation);
+					CubeComponent->SetVisibility(true);
+				}
+				else {
+					DoorComponent->SetRelativeRotation(FRotator(0, 90, 0));
+					DoorComponent->SetStaticMesh(DoorMesh);
+				}
+			}
 		}
 	}
 }
 
-void AArchVizController::OnRoadModeToggleBtnClicked()
-{
-	FText CurrRoadModeText = RoadConstructionWidget->ModeToggleBtnText->GetText();
-	if (CurrentRoadMode == ERodeMode::ConstructionMode){
-		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Construction Mode"));
-		CurrentRoadMode = ERodeMode::EditorMode;
-
-		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Visible);
-		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Visible);
-		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Visible);
-		RoadConstructionWidget->RoadConstructionMsg->SetText(FText::FromString("Select the Road which you want to Edit."));
-		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Hidden);
-	}
-	else {
-		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
-		CurrentRoadMode = ERodeMode::ConstructionMode;
-
-		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
-	}
-}
-
-void AArchVizController::DestroyWallGeneratorActor() {
-	if (WallGeneratorActor) {
-		WallGeneratorActor->Destroy();
-		WallGeneratorActor = nullptr;
-	}
-}
-
-void AArchVizController::OnWallBtnClicked(){
-	CurrentBuildingMode = EBuildingMode::Wall;
-	UpdateInputMappings();
-}
-
-void AArchVizController::OnDoorBtnClicked(){
-	CurrentBuildingMode = EBuildingMode::Door;
-	DestroyWallGeneratorActor();
-	UpdateInputMappings();
-
-}
-
-void AArchVizController::OnFloorBtnClicked(){
-	CurrentBuildingMode = EBuildingMode::Floor;
-	DestroyWallGeneratorActor();
-	UpdateInputMappings();
-
-}
-
-void AArchVizController::OnRoofBtnClicked(){
-	CurrentBuildingMode = EBuildingMode::Roof;
-	DestroyWallGeneratorActor();
-	UpdateInputMappings();
-
+// Door Bind Function
+void AArchVizController::SetDoorMesh(const FDoorData& DoorData) {
+	DoorMesh = DoorData.StaticMesh;
 }
