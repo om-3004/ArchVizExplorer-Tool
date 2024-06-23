@@ -16,9 +16,6 @@
 #include "Widgets/RoadConstructionWidget.h"
 #include "Widgets/BuildingConstructionWidget.h"
 
-//#include "DataAssets/WallDataAsset.h"
-//#include "DataAssets/DoorDataAsset.h"
-
 #include "WallGenerator.h"
 
 #include "ArchVizController.generated.h"
@@ -39,12 +36,18 @@ enum class ERodeMode : uint8 {
 };
 
 UENUM(BlueprintType)
-enum class EBuildingMode : uint8 {
+enum class EBuildingComponent : uint8 {
 	None,
 	Wall,
 	Door,
 	Floor,
 	Roof,
+};
+
+UENUM(BlueprintType)
+enum class EBuildingMode : uint8 {
+	ConstructionMode,
+	EditorMode,
 };
 
 UCLASS()
@@ -64,14 +67,14 @@ private:
 	// Home Widget
 	UPROPERTY()
 	UHomeWidget* HomeWidget;
-	UPROPERTY(EditAnywhere, Category = "Widget Reference")
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
 	TSubclassOf<UHomeWidget> HomeWidgetClassRef;
 	UPROPERTY()
 	EModeSelected CurrentSelectedMode;
 	UPROPERTY()
 	ERodeMode CurrentRoadMode;
 	UPROPERTY()
-	EBuildingMode CurrentBuildingMode;
+	EBuildingComponent CurrentBuildingComponent;
 	// Function - Home
 	UFUNCTION()
 	void UpdateWidget();
@@ -90,7 +93,7 @@ private:
 	// Road Construction
 	UPROPERTY()
 	URoadConstructionWidget* RoadConstructionWidget;
-	UPROPERTY(EditAnywhere, Category = "Widget Reference")
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
 	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
 	UPROPERTY()
 	ARoadGenerator* RoadGeneratorActor;
@@ -127,20 +130,43 @@ private:
 	UFUNCTION()
 	void GenerateNewRoad();
 	UFUNCTION()
-	void OnWidthValueChanged(float InValue);
+	void OnRoadWidthValueChanged(float InValue);
 	UFUNCTION()
-	void OnLocationXValueChanged(float InValue);
+	void OnRoadLocationXValueChanged(float InValue);
 	UFUNCTION()
-	void OnLocationYValueChanged(float InValue);
+	void OnRoadLocationYValueChanged(float InValue);
 
 	// Building Construction Widget
 	UPROPERTY()
 	UBuildingConstructionWidget* BuildingConstructionWidget;
-	UPROPERTY(EditAnywhere, Category = "Widget Reference")
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
 	TSubclassOf<UBuildingConstructionWidget> BuildingConstructionWidgetClassRef;
+	UPROPERTY()
+	EBuildingMode CurrentBuildingMode;
+	UPROPERTY()
+	UInputMappingContext* BuildingEditorIMC;
+	UPROPERTY()
+	bool bFromEditorToConstruction;
 	// Function - Building
 	UFUNCTION()
 	void UpdateBuildingMappings();
+	UFUNCTION()
+	void SetupBuildingEditorInputs();
+	UFUNCTION()
+	void SelectBuildingComponentOnClick();
+	// Widget Bind Function - Building
+	UFUNCTION()
+	void OnBuildingModeToggleBtnClicked();
+	UFUNCTION()
+	void OnWallLocationXValueChanged(float InValue);
+	UFUNCTION()
+	void OnWallLocationYValueChanged(float InValue);
+	UFUNCTION()
+	void OnDestroyWallBtnClicked();
+	UFUNCTION()
+	void OnDestroyDoorBtnClicked();
+	UFUNCTION()
+	void OnUpdateWallLocationUnderCursorBtnClicked();
 
 	// Wall Construction
 	UPROPERTY()
@@ -164,6 +190,10 @@ private:
 	void DestroyWallGeneratorActor();
 	UFUNCTION()
 	void SnapActor(float SnapValue);
+	UFUNCTION()
+	void EditWall();
+	UFUNCTION()
+	void EditDoor();
 	// Widget Bind Function - Wall
 	UFUNCTION()
 	void OnSegmentsChanged(float InValue);

@@ -7,6 +7,17 @@
 #include "ProceduralMeshComponent.h"
 #include "WallGenerator.generated.h"
 
+USTRUCT()
+struct FPair {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	UStaticMesh* StaticMesh;
+
+	UPROPERTY()
+	UProceduralMeshComponent* ProceduralMeshComponent;
+};
+
 UCLASS()
 class ARCHVIZEXPLORER_API AWallGenerator : public AActor
 {
@@ -27,8 +38,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "WallGenerator")
 	UMaterialInterface* ProceduralMeshMaterial;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "WallGenerator")
+	UPROPERTY()
 	float HeightOfWall;
+
+	UPROPERTY()
+	TArray<UStaticMeshComponent*> WallStaticMeshComponentsArr;
+
+	UPROPERTY()
+	TMap<int32, FPair> WallActorMap;
 
 	UFUNCTION()
 	void DestroyComponents();
@@ -38,13 +55,13 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	UPROPERTY(VisibleDefaultsOnly, Category = "WallGenerator")
+	UPROPERTY()
 	USceneComponent* SceneComponent;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "WallGenerator")
+	UPROPERTY()
 	UStaticMeshComponent* WallStaticMeshComponent;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "WallGenerator")
-	TArray<UStaticMeshComponent*> WallStaticMeshComponentsArr;
+	UFUNCTION()
+	void UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments);
 };
 

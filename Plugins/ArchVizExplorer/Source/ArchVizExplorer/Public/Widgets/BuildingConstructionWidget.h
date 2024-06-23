@@ -9,6 +9,7 @@
 #include "Components/SpinBox.h"
 #include "Components/Button.h"
 #include "ScrollBoxWidget.h"
+#include "Components/TextBlock.h"
 
 #include "BuildingConstructionWidget.generated.h"
 
@@ -42,4 +43,28 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UScrollBoxWidget* DoorScrollBoxWidget;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BuildingModeToggleBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* BuildingModeToggleBtnText;
+
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* LocationBox;
+
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* LocationX;
+	
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* LocationY;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* DestroyWallBtn;
+	
+	UPROPERTY(meta = (BindWidget))
+	UButton* DestroyDoorBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* UpdateWallLocationUnderCursorBtn;
 };

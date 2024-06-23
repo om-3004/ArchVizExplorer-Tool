@@ -32,6 +32,47 @@ void AWallGenerator::DestroyComponents()
 		}
 	}
 	WallStaticMeshComponentsArr.Empty();
+
+	if (!WallActorMap.IsEmpty()) {
+		for (auto& MapComponent : WallActorMap) {
+			if(MapComponent.Value.ProceduralMeshComponent) {
+				MapComponent.Value.ProceduralMeshComponent->DestroyComponent();
+				MapComponent.Value.ProceduralMeshComponent = nullptr;
+			}
+		}
+	}
+}
+
+void AWallGenerator::UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments) {
+	if (!WallActorMap.IsEmpty() && !WallStaticMeshComponentsArr.IsEmpty()) {
+		for (auto& MapComponent : WallActorMap) {
+			if (MapComponent.Key <= (NoOfSegments - 1) && WallStaticMeshComponentsArr[MapComponent.Key]) {
+				
+				FVector MeshComponentLocation = WallStaticMeshComponentsArr[MapComponent.Key]->GetRelativeLocation();
+				FVector WallDimensions = WallStaticMesh->GetBounds().GetBox().GetSize();
+				MeshComponentLocation.Z -= WallDimensions.Z/2;
+
+				WallStaticMeshComponentsArr[MapComponent.Key]->SetStaticMesh(MapComponent.Value.StaticMesh);
+				WallStaticMeshComponentsArr[MapComponent.Key]->SetRelativeRotation(FRotator(0, 90, 0));
+				WallStaticMeshComponentsArr[MapComponent.Key]->SetRelativeLocation(MeshComponentLocation);
+
+				float DoorHeight = MapComponent.Value.StaticMesh->GetBounds().GetBox().GetSize().Z;
+				FVector DoorLocation = WallStaticMeshComponentsArr[MapComponent.Key]->GetRelativeLocation();
+
+				MapComponent.Value.ProceduralMeshComponent = NewObject<UProceduralMeshComponent>(this);
+				FVector CubeLocation = FVector(DoorLocation.X, DoorLocation.Y, DoorLocation.Z + DoorHeight + ((WallDimensions.Z - DoorHeight)/2));
+				FVector CubeDimensions = FVector(WallDimensions.X, WallDimensions.Y, WallDimensions.Z - DoorHeight);
+
+				MapComponent.Value.ProceduralMeshComponent->SetupAttachment(SceneComponent);
+				MapComponent.Value.ProceduralMeshComponent->RegisterComponentWithWorld(GetWorld());
+
+				GenerateCube(CubeDimensions, FVector::ZeroVector, MapComponent.Value.ProceduralMeshComponent);
+				MapComponent.Value.ProceduralMeshComponent->SetRelativeLocation(CubeLocation);
+				MapComponent.Value.ProceduralMeshComponent->SetVisibility(true);
+
+			}
+		}
+	}
 }
 
 void AWallGenerator::GenerateWall(const int32& NoOfSegments) {
@@ -54,6 +95,8 @@ void AWallGenerator::GenerateWall(const int32& NoOfSegments) {
 
 		WallStaticMeshComponentsArr.Add(WallStaticMeshComponent);
 	}
+
+	UpdateDoorsAndProceduralMeshComponent(NoOfSegments);;
 }
 
 void AWallGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset, UProceduralMeshComponent* CubeComponent)
