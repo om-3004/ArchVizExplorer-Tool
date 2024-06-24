@@ -43,6 +43,23 @@ void AWallGenerator::DestroyComponents()
 	}
 }
 
+void AWallGenerator::CheckReducedSegments(const int32& NoOfSegments) {
+	TArray<int32> Indices;
+
+	if (!WallActorMap.IsEmpty()) {
+		for (auto& MapComponent : WallActorMap) {
+			if (MapComponent.Key > (NoOfSegments - 1)) {
+				Indices.Add(MapComponent.Key);
+			}
+		}
+		for (int i{}; i < Indices.Num(); ++i) {
+			WallActorMap.FindAndRemoveChecked(Indices[i]);
+		}
+	}
+
+	Indices.Empty();
+}
+
 void AWallGenerator::UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments) {
 	if (!WallActorMap.IsEmpty() && !WallStaticMeshComponentsArr.IsEmpty()) {
 		for (auto& MapComponent : WallActorMap) {
@@ -77,6 +94,7 @@ void AWallGenerator::UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments) {
 
 void AWallGenerator::GenerateWall(const int32& NoOfSegments) {
 	DestroyComponents();
+	CheckReducedSegments(NoOfSegments);
 
 	float LengthOfWallSegment{};
 	if(WallStaticMesh) {

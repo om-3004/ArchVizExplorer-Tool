@@ -17,6 +17,7 @@
 #include "Widgets/BuildingConstructionWidget.h"
 
 #include "WallGenerator.h"
+#include "FloorGenerator.h"
 
 #include "ArchVizController.generated.h"
 
@@ -83,7 +84,7 @@ private:
 	UFUNCTION()
 	void CreateWidgets();
 	UFUNCTION()
-	void BindWidgets();
+	void BindWidgetDelegates();
 	UFUNCTION()
 	void SetDefaultMode();
 	// Widget Bind Function - Home
@@ -146,7 +147,9 @@ private:
 	UPROPERTY()
 	UInputMappingContext* BuildingEditorIMC;
 	UPROPERTY()
-	bool bFromEditorToConstruction;
+	bool bIsInBuildingEditorMode;
+	UPROPERTY()
+	bool bShouldEditWallLocationUnderCursor;
 	// Function - Building
 	UFUNCTION()
 	void UpdateBuildingMappings();
@@ -194,6 +197,8 @@ private:
 	void EditWall();
 	UFUNCTION()
 	void EditDoor();
+	UFUNCTION()
+	void EditFloor();
 	// Widget Bind Function - Wall
 	UFUNCTION()
 	void OnSegmentsChanged(float InValue);
@@ -219,6 +224,21 @@ private:
 	void SetDoorMesh(const FDoorData& DoorData);
 	
 	// Floor Construction
+	UPROPERTY()
+	AFloorGenerator* FloorGeneratorActor;
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Floor")
+	TSubclassOf<AFloorGenerator> FloorGeneratorActorRef;
+	UPROPERTY()
+	UInputMappingContext* FloorConstructionIMC;
+	UPROPERTY()
+	FVector StartFloorLocation{};
+	// Function - Floor
+	UFUNCTION()
+	void SetupFloorConstructionInputs();
+	UFUNCTION()
+	void StartBuildingFloor();
+	UFUNCTION()
+	void CompleteBuildingFloor();
 	// Widget Bind Function - Floor
 	UFUNCTION()
 	void OnFloorBtnClicked();

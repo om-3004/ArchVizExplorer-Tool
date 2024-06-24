@@ -63,5 +63,8 @@ private:
 
 	UFUNCTION()
 	void UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments);
+
+	UFUNCTION()
+	void CheckReducedSegments(const int32& NoOfSegments);
 };
 
