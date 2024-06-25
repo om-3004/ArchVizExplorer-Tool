@@ -17,6 +17,8 @@ public:
 
 	UFUNCTION()
 	void GenerateFloor(const FVector& Dimensions);
+	UPROPERTY()
+	FVector FloorMeasurements{};
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

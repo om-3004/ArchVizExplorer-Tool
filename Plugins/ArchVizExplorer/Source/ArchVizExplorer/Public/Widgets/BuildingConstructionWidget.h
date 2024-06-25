@@ -58,11 +58,21 @@ public:
 
 	// Floor Generator
 	UPROPERTY(meta = (BindWidget))
-	UHorizontalBox* FloorDimensions;
+	UHorizontalBox* FloorLocationBox;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* FloorLocationX;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* FloorLocationY;
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* FloorDimensionsBox;
 	UPROPERTY(meta = (BindWidget))
 	USpinBox* FloorDimensionX;
 	UPROPERTY(meta = (BindWidget))
 	USpinBox* FloorDimensionY;
 	UPROPERTY(meta = (BindWidget))
 	USpinBox* FloorDimensionZ;
+	UPROPERTY(meta = (BindWidget))
+	UButton* DestroyFloorBtn;
+	UPROPERTY(meta = (BindWidget))
+	UButton* UpdateFloorLocationUnderCursorBtn;
 };

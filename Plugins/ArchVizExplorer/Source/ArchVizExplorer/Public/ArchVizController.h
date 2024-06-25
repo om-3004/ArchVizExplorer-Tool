@@ -180,6 +180,8 @@ private:
 	UInputMappingContext* WallConstructionIMC;
 	UPROPERTY()
 	FVector WallLocation;
+	UPROPERTY()
+	UStaticMesh* TempWallMesh;
 	// Function - Wall
 	UFUNCTION()
 	void SetupWallConstructionInputs();
@@ -232,9 +234,13 @@ private:
 	UInputMappingContext* FloorConstructionIMC;
 	UPROPERTY()
 	FVector StartFloorLocation{};
+	UPROPERTY()
+	bool bShouldEditFloorLocationUnderCursor;
 	// Function - Floor
 	UFUNCTION()
 	void SetupFloorConstructionInputs();
+	UFUNCTION()
+	void PreviewFloor();
 	UFUNCTION()
 	void StartBuildingFloor();
 	UFUNCTION()
@@ -242,6 +248,20 @@ private:
 	// Widget Bind Function - Floor
 	UFUNCTION()
 	void OnFloorBtnClicked();
+	UFUNCTION()
+	void OnFloorLocationXValueChanged(float InValue);
+	UFUNCTION()
+	void OnFloorLocationYValueChanged(float InValue);
+	UFUNCTION()
+	void OnFloorDimensionXValueChanged(float InValue);
+	UFUNCTION()
+	void OnFloorDimensionYValueChanged(float InValue);
+	UFUNCTION()
+	void OnFloorDimensionZValueChanged(float InValue);
+	UFUNCTION()
+	void OnDestroyFloorBtnClicked();
+	UFUNCTION()
+	void OnUpdateFloorLocationUnderCursorBtnClicked();
 	
 	// Roof Construction
 	// Widget Bind Function - Roof
