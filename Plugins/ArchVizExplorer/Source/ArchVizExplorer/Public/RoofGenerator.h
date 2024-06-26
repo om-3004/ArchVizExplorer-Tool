@@ -15,6 +15,9 @@ class ARCHVIZEXPLORER_API ARoofGenerator : public AActor
 public:	
 	ARoofGenerator();
 
+	UPROPERTY()
+	FVector RoofMeasurements{};
+
 	UFUNCTION()
 	void GenerateRoof(const FVector& Dimensions);
 

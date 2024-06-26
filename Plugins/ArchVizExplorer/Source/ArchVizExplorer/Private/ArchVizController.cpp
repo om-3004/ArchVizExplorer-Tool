@@ -108,6 +108,15 @@ void AArchVizController::BindWidgetDelegates() {
 		BuildingConstructionWidget->FloorDimensionZ->OnValueChanged.AddDynamic(this, &AArchVizController::OnFloorDimensionZValueChanged);
 		BuildingConstructionWidget->DestroyFloorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDestroyFloorBtnClicked);
 		BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnUpdateFloorLocationUnderCursorBtnClicked);
+
+		// Roof Generator
+		BuildingConstructionWidget->RoofLocationX->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofLocationXValueChanged);
+		BuildingConstructionWidget->RoofLocationY->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofLocationYValueChanged);
+		BuildingConstructionWidget->RoofLocationZ->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofLocationZValueChanged);
+		BuildingConstructionWidget->RoofDimensionX->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofDimensionXValueChanged);
+		BuildingConstructionWidget->RoofDimensionY->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofDimensionYValueChanged);
+		BuildingConstructionWidget->RoofDimensionZ->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofDimensionZValueChanged);
+		BuildingConstructionWidget->DestroyRoofBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDestroyRoofBtnClicked);
 	}
 }
 void AArchVizController::BeginPlay() {
@@ -229,6 +238,11 @@ void AArchVizController::SetDefaultMode() {
 		BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		// Roof Editor Widgets
+		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 		break;
 	}
 
@@ -468,6 +482,10 @@ void AArchVizController::SelectBuildingComponentOnClick() {
 			FloorGeneratorActor = Cast<AFloorGenerator>(HitResult.GetActor());
 			EditFloor();
 		}
+		else if (Cast<ARoofGenerator>(HitResult.GetActor())) {
+			RoofGeneratorActor = Cast<ARoofGenerator>(HitResult.GetActor());
+			EditRoof();
+		}
 		else { // No Asset Selected
 			// Wall Editor Widgets
 			BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
@@ -516,6 +534,11 @@ void AArchVizController::EditWall() {
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Visible);
 	BuildingConstructionWidget->DestroyWallBtn->SetVisibility(ESlateVisibility::Visible);
 	BuildingConstructionWidget->UpdateWallLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Visible);
+	if (WallGeneratorActor) {
+		BuildingConstructionWidget->NoSegmentsValue->SetValue(WallGeneratorActor->WallStaticMeshComponentsArr.Num());
+		BuildingConstructionWidget->LocationX->SetValue(WallGeneratorActor->GetActorLocation().X);
+		BuildingConstructionWidget->LocationY->SetValue(WallGeneratorActor->GetActorLocation().Y);
+	}
 
 	// Door Editor Widgets
 	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -527,11 +550,10 @@ void AArchVizController::EditWall() {
 	BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
 
-	if (WallGeneratorActor) {
-		BuildingConstructionWidget->NoSegmentsValue->SetValue(WallGeneratorActor->WallStaticMeshComponentsArr.Num());
-		BuildingConstructionWidget->LocationX->SetValue(WallGeneratorActor->GetActorLocation().X);
-		BuildingConstructionWidget->LocationY->SetValue(WallGeneratorActor->GetActorLocation().Y);
-	}
+	// Roof Editor Widgets
+	BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 }
 void AArchVizController::EditDoor() {
 	// Door Editor Widgets
@@ -550,6 +572,11 @@ void AArchVizController::EditDoor() {
 	BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+	// Roof Editor Widgets
+	BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 }
 void AArchVizController::EditFloor() {
 	// Floor Editor Widgets
@@ -576,6 +603,43 @@ void AArchVizController::EditFloor() {
 	// Door Editor Widgets
 	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+	// Roof Editor Widgets
+	BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
+}
+void AArchVizController::EditRoof() {
+	// Roof Editor Widgets
+	BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Visible);
+	BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Visible);
+	BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Visible);
+	if (RoofGeneratorActor) {
+		BuildingConstructionWidget->RoofLocationX->SetValue(RoofGeneratorActor->GetActorLocation().X);
+		BuildingConstructionWidget->RoofLocationY->SetValue(RoofGeneratorActor->GetActorLocation().Y);
+		BuildingConstructionWidget->RoofLocationZ->SetValue(RoofGeneratorActor->GetActorLocation().Z);
+
+		BuildingConstructionWidget->RoofDimensionX->SetValue(RoofGeneratorActor->RoofMeasurements.X);
+		BuildingConstructionWidget->RoofDimensionY->SetValue(RoofGeneratorActor->RoofMeasurements.Y);
+		BuildingConstructionWidget->RoofDimensionZ->SetValue(RoofGeneratorActor->RoofMeasurements.Z);
+	}
+
+	// Wall Editor Widgets
+	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyWallBtn->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->UpdateWallLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+	// Door Editor Widgets
+	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+	// Floor Editor Widgets
+	BuildingConstructionWidget->FloorLocationBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
+	BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
 }
 
 // Building Widget Bind Function
@@ -651,20 +715,25 @@ void AArchVizController::OnBuildingModeToggleBtnClicked()
 		BuildingConstructionWidget->DoorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->FloorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->RoofBtn->SetVisibility(ESlateVisibility::Hidden);
-		// Wall Widgets
+		// Wall Editor Widgets
 		BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyWallBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->UpdateWallLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
-		// Door Widgets
+		// Door Editor Widgets
 		BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
-		// Floor Widgets
+		// Floor Editor Widgets
 		BuildingConstructionWidget->FloorLocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+		// Roof Editor Widgets
+		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
+
 		UpdateInputMappings();
 	}
 	else {
@@ -681,20 +750,25 @@ void AArchVizController::OnBuildingModeToggleBtnClicked()
 		BuildingConstructionWidget->DoorBtn->SetVisibility(ESlateVisibility::Visible);
 		BuildingConstructionWidget->FloorBtn->SetVisibility(ESlateVisibility::Visible);
 		BuildingConstructionWidget->RoofBtn->SetVisibility(ESlateVisibility::Visible);
-		// Wall Widgets
+		// Wall Editor Widgets
 		BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyWallBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->UpdateWallLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
-		// Door Widgets
+		// Door Editor Widgets
 		BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
-		// Floor Widgets
+		// Floor Editor Widgets
 		BuildingConstructionWidget->FloorLocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+		// Roof Editor Widgets
+		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
+
 		UpdateInputMappings();
 	}
 }
@@ -923,13 +997,8 @@ void AArchVizController::StartBuildingFloor()
 			FloorGeneratorActor->FloorMeasurements.Y = FMath::Abs(CurrentFloorLocation.Y - StartFloorLocation.Y);
 			FloorGeneratorActor->FloorMeasurements.Z = 5.0f;
 
-			/*float FloorLength = FMath::Abs(CurrentFloorLocation.X - StartFloorLocation.X);
-			float FloorWidth = FMath::Abs(CurrentFloorLocation.Y - StartFloorLocation.Y);
-			float FloorHeight = 5.0f;*/
-
 			FloorGeneratorActor->SetActorLocation((StartFloorLocation + CurrentFloorLocation) / 2);
 			FloorGeneratorActor->GenerateFloor(FloorGeneratorActor->FloorMeasurements);
-			//FloorGeneratorActor->GenerateFloor({FloorLength, FloorWidth, FloorHeight});
 			SnapActor(12.5);
 		}
 	}
@@ -1001,7 +1070,6 @@ void AArchVizController::SetupRoofConstructionInputs() {
 		EnhancedInputComponent->BindAction(ClickforRoofConstruction, ETriggerEvent::Completed, this, &AArchVizController::GenerateRoofOnClick);
 	}
 }
-
 void AArchVizController::GenerateRoofOnClick()
 {
 	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
@@ -1051,6 +1119,7 @@ void AArchVizController::GenerateRoofOnClick()
 
 	if (WallHitCount == 4) {
 		if((TempWallActorX->HeightOfWall==TempWallActor_X->HeightOfWall) && (TempWallActorX->HeightOfWall == TempWallActorY->HeightOfWall) && TempWallActorX->HeightOfWall == TempWallActor_Y->HeightOfWall) {
+
 			float RoofLength = FMath::Abs(WallLocationX.X - WallLocation_X.X) + (TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y * 2);
 			float RoofWidth = FMath::Abs(WallLocationY.Y - WallLocation_Y.Y) + (TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y * 2);
 			float RoofHeight = TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y;
@@ -1063,7 +1132,8 @@ void AArchVizController::GenerateRoofOnClick()
 
 			if (RoofGeneratorActorRef) {
 				RoofGeneratorActor = GetWorld()->SpawnActor<ARoofGenerator>(RoofGeneratorActorRef, RoofLocation, FRotator::ZeroRotator, SpawnParams);
-				RoofGeneratorActor->GenerateRoof({ RoofLength, RoofWidth, RoofHeight });
+				RoofGeneratorActor->RoofMeasurements = { RoofLength, RoofWidth, RoofHeight };;
+				RoofGeneratorActor->GenerateRoof(RoofGeneratorActor->RoofMeasurements);
 			}
 		}
 		else {
@@ -1074,5 +1144,53 @@ void AArchVizController::GenerateRoofOnClick()
 	else {
 		BuildingConstructionWidget->RoofErrorMsgTxt->SetText(FText::FromString("There must be 4 walls in a house to build a roof."));
 		BuildingConstructionWidget->PlayAnimation(BuildingConstructionWidget->RoofErrorMsgAnim);
+	}
+}
+
+// Roof Bind Function
+void AArchVizController::OnRoofLocationXValueChanged(float InValue) {
+	if (RoofGeneratorActor) {
+		FVector Location = RoofGeneratorActor->GetActorLocation();
+		RoofGeneratorActor->SetActorLocation(FVector(InValue, Location.Y, Location.Z));
+	}
+}
+void AArchVizController::OnRoofLocationYValueChanged(float InValue) {
+	if (RoofGeneratorActor) {
+		FVector Location = RoofGeneratorActor->GetActorLocation();
+		RoofGeneratorActor->SetActorLocation(FVector(Location.X, InValue, Location.Z));
+	}
+}
+void AArchVizController::OnRoofLocationZValueChanged(float InValue) {
+	if (RoofGeneratorActor) {
+		FVector Location = RoofGeneratorActor->GetActorLocation();
+		RoofGeneratorActor->SetActorLocation(FVector(Location.X, Location.Y, InValue));
+	}
+}
+void AArchVizController::OnRoofDimensionXValueChanged(float InValue) {
+	if (RoofGeneratorActor) {
+		RoofGeneratorActor->RoofMeasurements.X = InValue;
+		RoofGeneratorActor->GenerateRoof(RoofGeneratorActor->RoofMeasurements);
+	}
+}
+void AArchVizController::OnRoofDimensionYValueChanged(float InValue) {
+	if (RoofGeneratorActor) {
+		RoofGeneratorActor->RoofMeasurements.Y = InValue;
+		RoofGeneratorActor->GenerateRoof(RoofGeneratorActor->RoofMeasurements);
+	}
+}
+void AArchVizController::OnRoofDimensionZValueChanged(float InValue){
+	if (RoofGeneratorActor) {
+		RoofGeneratorActor->RoofMeasurements.Z = InValue;
+		RoofGeneratorActor->GenerateRoof(RoofGeneratorActor->RoofMeasurements);
+	}
+}
+void AArchVizController::OnDestroyRoofBtnClicked(){
+	if (RoofGeneratorActor) {
+		RoofGeneratorActor->Destroy();
+		RoofGeneratorActor = nullptr;
+
+		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 	}
 }

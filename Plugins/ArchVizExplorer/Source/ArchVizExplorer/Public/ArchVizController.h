@@ -202,6 +202,8 @@ private:
 	void EditDoor();
 	UFUNCTION()
 	void EditFloor();
+	UFUNCTION()
+	void EditRoof();
 	// Widget Bind Function - Wall
 	UFUNCTION()
 	void OnSegmentsChanged(float InValue);
@@ -279,5 +281,19 @@ private:
 	// Widget Bind Function - Roof
 	UFUNCTION()
 	void OnRoofBtnClicked();
+	UFUNCTION()
+	void OnRoofLocationXValueChanged(float InValue);
+	UFUNCTION()
+	void OnRoofLocationYValueChanged(float InValue);
+	UFUNCTION()
+	void OnRoofLocationZValueChanged(float InValue);
+	UFUNCTION()
+	void OnRoofDimensionXValueChanged(float InValue);
+	UFUNCTION()
+	void OnRoofDimensionYValueChanged(float InValue);
+	UFUNCTION()
+	void OnRoofDimensionZValueChanged(float InValue);
+	UFUNCTION()
+	void OnDestroyRoofBtnClicked();
 
 };

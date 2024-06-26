@@ -75,7 +75,28 @@ public:
 	UButton* DestroyFloorBtn;
 	UPROPERTY(meta = (BindWidget))
 	UButton* UpdateFloorLocationUnderCursorBtn;
+	
+	//Roof Construction
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* RoofLocationBox;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofLocationX;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofLocationY;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofLocationZ;
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* RoofDimensionsBox;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofDimensionX;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofDimensionY;
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* RoofDimensionZ;
+	UPROPERTY(meta = (BindWidget))
+	UButton* DestroyRoofBtn;
 
+	// Roof Animation
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* RoofErrorMsgTxt;
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
