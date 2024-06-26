@@ -27,7 +27,7 @@ private:
 	UPROPERTY()
 	UProceduralMeshComponent* FloorProceduralMeshComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category = "FloorGenerator")
+	UPROPERTY(EditDefaultsOnly, Category = "FloorGenerator | Material")
 	UMaterialInterface* FloorProceduralMeshMaterial;
 
 

@@ -35,9 +35,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "WallGenerator")
 	UStaticMesh* WallStaticMesh;
 
-	UPROPERTY(EditDefaultsOnly, Category = "WallGenerator")
-	UMaterialInterface* ProceduralMeshMaterial;
-
 	UPROPERTY()
 	float HeightOfWall;
 
@@ -60,6 +57,9 @@ private:
 
 	UPROPERTY()
 	UStaticMeshComponent* WallStaticMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "WallGenerator | Material")
+	UMaterialInterface* WallProceduralMeshMaterial;
 
 	UFUNCTION()
 	void UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments);

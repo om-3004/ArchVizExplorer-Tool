@@ -193,6 +193,6 @@ void AWallGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	}
 
 	CubeComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	CubeComponent->SetMaterial(0, ProceduralMeshMaterial);
+	CubeComponent->SetMaterial(0, WallProceduralMeshMaterial);
 
 }

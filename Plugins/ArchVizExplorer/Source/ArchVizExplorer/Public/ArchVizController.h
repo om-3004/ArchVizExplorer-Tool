@@ -18,6 +18,7 @@
 
 #include "WallGenerator.h"
 #include "FloorGenerator.h"
+#include "RoofGenerator.h"
 
 #include "ArchVizController.generated.h"
 
@@ -264,6 +265,17 @@ private:
 	void OnUpdateFloorLocationUnderCursorBtnClicked();
 	
 	// Roof Construction
+	UPROPERTY()
+	ARoofGenerator* RoofGeneratorActor;
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Roof")
+	TSubclassOf<ARoofGenerator> RoofGeneratorActorRef;
+	UPROPERTY()
+	UInputMappingContext* RoofConstructionIMC;
+	// Function - Floor
+	UFUNCTION()
+	void SetupRoofConstructionInputs();
+	UFUNCTION()
+	void GenerateRoofOnClick();
 	// Widget Bind Function - Roof
 	UFUNCTION()
 	void OnRoofBtnClicked();

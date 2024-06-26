@@ -128,6 +128,7 @@ void AArchVizController::SetupInputComponent()
 	SetupWallConstructionInputs();
 	SetupDoorConstructionInputs();
 	SetupFloorConstructionInputs();
+	SetupRoofConstructionInputs(); 
 }
 
 // Home Widget Bind Function
@@ -165,6 +166,7 @@ void AArchVizController::UpdateBuildingMappings() {
 				Subsystem->AddMappingContext(FloorConstructionIMC, 0);
 				break;
 			case EBuildingComponent::Roof:
+				Subsystem->AddMappingContext(RoofConstructionIMC, 0);
 				break;
 			}
 		}
@@ -984,5 +986,93 @@ void AArchVizController::OnDestroyFloorBtnClicked(){
 void AArchVizController::OnUpdateFloorLocationUnderCursorBtnClicked(){
 	if (FloorGeneratorActor) {
 		bShouldEditFloorLocationUnderCursor = true;
+	}
+}
+
+//Roof Construction
+void AArchVizController::SetupRoofConstructionInputs() {
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
+		RoofConstructionIMC = NewObject<UInputMappingContext>();
+
+		UInputAction* ClickforRoofConstruction = NewObject<UInputAction>(this);
+		ClickforRoofConstruction->ValueType = EInputActionValueType::Boolean;
+		RoofConstructionIMC->MapKey(ClickforRoofConstruction, EKeys::LeftMouseButton);
+
+		EnhancedInputComponent->BindAction(ClickforRoofConstruction, ETriggerEvent::Completed, this, &AArchVizController::GenerateRoofOnClick);
+	}
+}
+
+void AArchVizController::GenerateRoofOnClick()
+{
+	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+
+	FVector HitLocation = HitResult.Location;
+	HitLocation.Z += 100;
+	FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true);
+
+	int8 WallHitCount{};
+	FVector WallLocationX{};
+	FVector WallLocationY{};
+	FVector WallLocation_X{};
+	FVector WallLocation_Y{};
+	AWallGenerator* TempWallActorX{};
+	AWallGenerator* TempWallActor_X{};
+	AWallGenerator* TempWallActorY{};
+	AWallGenerator* TempWallActor_Y{};
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, HitLocation, HitLocation + FVector(1, 0, 0) * 10000, ECC_Visibility, TraceParams)) {
+		if(Cast<AWallGenerator>(HitResult.GetActor())) {
+			++WallHitCount;
+			WallLocationX = HitResult.Location;
+			TempWallActorX = Cast<AWallGenerator>(HitResult.GetActor());
+		}
+	}
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, HitLocation, HitLocation + FVector(-1, 0, 0) * 10000, ECC_Visibility, TraceParams)) {
+		if (Cast<AWallGenerator>(HitResult.GetActor())) {
+			++WallHitCount;
+			WallLocation_X = HitResult.Location;
+			TempWallActor_X = Cast<AWallGenerator>(HitResult.GetActor());
+		}
+	}
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, HitLocation, HitLocation + FVector(0, 1, 0) * 10000, ECC_Visibility, TraceParams)) {
+		if (Cast<AWallGenerator>(HitResult.GetActor())) {
+			++WallHitCount;
+			WallLocationY = HitResult.Location;
+			TempWallActorY = Cast<AWallGenerator>(HitResult.GetActor());
+		}
+	}
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, HitLocation, HitLocation + FVector(0, -1, 0) * 10000, ECC_Visibility, TraceParams)) {
+		if (Cast<AWallGenerator>(HitResult.GetActor())) {
+			++WallHitCount;
+			WallLocation_Y = HitResult.Location;
+			TempWallActor_Y = Cast<AWallGenerator>(HitResult.GetActor());
+		}
+	}
+
+	if (WallHitCount == 4) {
+		if((TempWallActorX->HeightOfWall==TempWallActor_X->HeightOfWall) && (TempWallActorX->HeightOfWall == TempWallActorY->HeightOfWall) && TempWallActorX->HeightOfWall == TempWallActor_Y->HeightOfWall) {
+			float RoofLength = FMath::Abs(WallLocationX.X - WallLocation_X.X) + (TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y * 2);
+			float RoofWidth = FMath::Abs(WallLocationY.Y - WallLocation_Y.Y) + (TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y * 2);
+			float RoofHeight = TempWallActorX->WallStaticMesh->GetBounds().GetBox().GetSize().Y;
+
+			float RoofLocationZ = TempWallActorX->GetActorLocation().Z + TempWallActorX->HeightOfWall;
+			FVector RoofLocation = { (WallLocationX.X + WallLocation_X.X) / 2, (WallLocationY.Y + WallLocation_Y.Y) / 2, RoofLocationZ };
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			if (RoofGeneratorActorRef) {
+				RoofGeneratorActor = GetWorld()->SpawnActor<ARoofGenerator>(RoofGeneratorActorRef, RoofLocation, FRotator::ZeroRotator, SpawnParams);
+				RoofGeneratorActor->GenerateRoof({ RoofLength, RoofWidth, RoofHeight });
+			}
+		}
+		else {
+			BuildingConstructionWidget->RoofErrorMsgTxt->SetText(FText::FromString("The height of all walls in a house must be same to build a roof."));
+			BuildingConstructionWidget->PlayAnimation(BuildingConstructionWidget->RoofErrorMsgAnim);
+		}
+	}
+	else {
+		BuildingConstructionWidget->RoofErrorMsgTxt->SetText(FText::FromString("There must be 4 walls in a house to build a roof."));
+		BuildingConstructionWidget->PlayAnimation(BuildingConstructionWidget->RoofErrorMsgAnim);
 	}
 }

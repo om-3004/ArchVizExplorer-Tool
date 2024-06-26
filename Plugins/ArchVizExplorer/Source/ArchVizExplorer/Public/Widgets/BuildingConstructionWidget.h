@@ -75,4 +75,9 @@ public:
 	UButton* DestroyFloorBtn;
 	UPROPERTY(meta = (BindWidget))
 	UButton* UpdateFloorLocationUnderCursorBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* RoofErrorMsgTxt;
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* RoofErrorMsgAnim;
 };
