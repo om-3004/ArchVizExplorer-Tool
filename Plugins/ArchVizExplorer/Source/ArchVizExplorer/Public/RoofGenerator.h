@@ -24,14 +24,14 @@ public:
 	UFUNCTION()
 	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset);
 
+	UPROPERTY()
+	UProceduralMeshComponent* RoofProceduralMeshComponent;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	UPROPERTY()
-	UProceduralMeshComponent* RoofProceduralMeshComponent;
-
 	UPROPERTY(EditDefaultsOnly, Category = "RoofGenerator | Material")
 	UMaterialInterface* RoofProceduralMeshMaterial;
 

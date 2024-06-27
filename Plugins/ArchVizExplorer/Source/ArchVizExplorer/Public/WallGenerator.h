@@ -32,6 +32,9 @@ public:
 	UFUNCTION()
 	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset, UProceduralMeshComponent* CubeComponent);
 
+	UFUNCTION()
+	void ApplyMaterialToWallActor(UMaterialInterface* WallMaterial);
+
 	UPROPERTY(EditDefaultsOnly, Category = "WallGenerator")
 	UStaticMesh* WallStaticMesh;
 
@@ -43,6 +46,9 @@ public:
 
 	UPROPERTY()
 	TMap<int32, FPair> WallActorMap;
+
+	UPROPERTY()
+	TArray<int32> Indices;
 
 	UFUNCTION()
 	void DestroyComponents();

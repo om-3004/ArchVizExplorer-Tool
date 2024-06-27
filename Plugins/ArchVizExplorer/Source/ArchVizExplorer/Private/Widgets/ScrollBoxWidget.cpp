@@ -5,11 +5,13 @@
 
 TSharedRef<SWidget> UScrollBoxWidget::RebuildWidget()
 {
-	ScrollBoxAsset = SNew(SScrollBoxSlate).InDoorAssetManager(DoorDataAsset).InWallAssetManager(WallDataAsset).InThumbnailSizeScale(ThumbnailSizeScale).InScrollBoxType(ScrollBoxType);
+	ScrollBoxAsset = SNew(SScrollBoxSlate).InWallAssetManager(WallDataAsset).InDoorAssetManager(DoorDataAsset).InRoadMaterialAssetManager(RoadMaterialDataAsset).InBuildingMaterialAssetManager(BuildingMaterialDataAsset).InThumbnailSizeScale(ThumbnailSizeScale).InScrollBoxType(ScrollBoxType);
 
 	if (ScrollBoxAsset.IsValid()) {
 		ScrollBoxAsset->OnWallSelection.BindUFunction(this, "PassWallInController");
 		ScrollBoxAsset->OnDoorSelection.BindUFunction(this, "PassDoorInController");
+		ScrollBoxAsset->OnRoadMaterialSelection.BindUFunction(this, "PassRoadMaterialInController");
+		ScrollBoxAsset->OnBuildingMaterialSelection.BindUFunction(this, "PassBuildingMaterialInController");
 	}
 
 	return ScrollBoxAsset.ToSharedRef();
@@ -33,6 +35,8 @@ void UScrollBoxWidget::SynchronizeProperties()
 	if (ScrollBoxAsset.IsValid()) {
 		ScrollBoxAsset->DoorDataAsset = DoorDataAsset;
 		ScrollBoxAsset->WallDataAsset = WallDataAsset;
+		ScrollBoxAsset->RoadMaterialDataAsset = RoadMaterialDataAsset;
+		ScrollBoxAsset->BuildingMaterialDataAsset = BuildingMaterialDataAsset;
 		ScrollBoxAsset->ScrollBoxType = ScrollBoxType;
 		ScrollBoxAsset->ThumbnailSizeScale = ThumbnailSizeScale;
 		ScrollBoxAsset->ScrollBoxSelection();
@@ -43,8 +47,16 @@ void UScrollBoxWidget::PassWallInController(const FWallData& WallData)
 {
 	AfterWallSelection.ExecuteIfBound(WallData);
 }
-
 void UScrollBoxWidget::PassDoorInController(const FDoorData& DoorData)
 {
 	AfterDoorSelection.ExecuteIfBound(DoorData);
+}
+
+void UScrollBoxWidget::PassRoadMaterialInController(const FRoadMaterialData& RoadMaterialData)
+{
+	AfterRoadMaterialSelection.ExecuteIfBound(RoadMaterialData);
+}
+void UScrollBoxWidget::PassBuildingMaterialInController(const FBuildingMaterialData& BuildingMaterialData)
+{
+	AfterBuildingMaterialSelection.ExecuteIfBound(BuildingMaterialData);
 }

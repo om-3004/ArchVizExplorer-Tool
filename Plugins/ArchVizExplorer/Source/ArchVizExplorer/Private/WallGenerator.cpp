@@ -2,6 +2,7 @@
 
 
 #include "WallGenerator.h"
+#include "ArchVizController.h"
 
 AWallGenerator::AWallGenerator()
 {
@@ -44,7 +45,7 @@ void AWallGenerator::DestroyComponents()
 }
 
 void AWallGenerator::CheckReducedSegments(const int32& NoOfSegments) {
-	TArray<int32> Indices;
+	Indices.Empty();
 
 	if (!WallActorMap.IsEmpty()) {
 		for (auto& MapComponent : WallActorMap) {
@@ -56,8 +57,6 @@ void AWallGenerator::CheckReducedSegments(const int32& NoOfSegments) {
 			WallActorMap.FindAndRemoveChecked(Indices[i]);
 		}
 	}
-
-	Indices.Empty();
 }
 
 void AWallGenerator::UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments) {
@@ -194,4 +193,32 @@ void AWallGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 
 	CubeComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
 	if(WallProceduralMeshMaterial) {CubeComponent->SetMaterial(0, WallProceduralMeshMaterial);}
+}
+
+void AWallGenerator::ApplyMaterialToWallActor(UMaterialInterface* WallMaterial){
+	UMaterialInstanceDynamic* DynamicWallMaterial1 = UMaterialInstanceDynamic::Create(WallMaterial, this);
+	UMaterialInstanceDynamic* DynamicWallMaterial2 = UMaterialInstanceDynamic::Create(WallMaterial, this);
+
+	if (DynamicWallMaterial1 && DynamicWallMaterial2) {
+		FVector WallDimensions = WallStaticMesh->GetBounds().GetBox().GetSize();
+
+		for (int i{}; i < WallStaticMeshComponentsArr.Num(); ++i) {
+			if (WallActorMap.Contains(i)) {
+				float TileX = (WallDimensions.X) / (WallDimensions.Z - 212);
+				float TileY = 1;
+				DynamicWallMaterial1->SetScalarParameterValue("TileX", TileX);
+				DynamicWallMaterial1->SetScalarParameterValue("TileY", TileY);
+
+				WallActorMap[i].ProceduralMeshComponent->SetMaterial(0, DynamicWallMaterial1);
+			}
+			else {
+				float TileX = (WallDimensions.X) / (WallDimensions.Z - 212);
+				float TileY = (WallDimensions.Z) / (WallDimensions.Z - 212);
+				DynamicWallMaterial2->SetScalarParameterValue("TileX", TileX);
+				DynamicWallMaterial2->SetScalarParameterValue("TileY", TileY);
+
+				WallStaticMeshComponentsArr[i]->SetMaterial(0, DynamicWallMaterial2);
+			}
+		}
+	}
 }

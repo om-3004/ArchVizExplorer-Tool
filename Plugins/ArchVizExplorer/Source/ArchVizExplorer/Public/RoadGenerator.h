@@ -16,22 +16,20 @@ class ARCHVIZEXPLORER_API ARoadGenerator : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ARoadGenerator();
 
 	UFUNCTION(BlueprintCallable, Category = "RoadGenerator")
 	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset);
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "RoadGenerator")
+	UPROPERTY()
 	UProceduralMeshComponent* RoadProceduralMeshComponent;
 
-
+	UPROPERTY()
+	FVector RoadMeasurements{};
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:

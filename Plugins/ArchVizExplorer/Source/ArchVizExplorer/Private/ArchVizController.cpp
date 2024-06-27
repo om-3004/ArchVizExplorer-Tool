@@ -119,6 +119,9 @@ void AArchVizController::CreateWidgets() {
 	if (BuildingConstructionWidgetClassRef) {
 		BuildingConstructionWidget = CreateWidget<UBuildingConstructionWidget>(this, BuildingConstructionWidgetClassRef);
 	}
+	if (MaterialSelectionWidgetClassRef) {
+		MaterialSelectionWidget = CreateWidget<UMaterialSelectionWidget>(this, MaterialSelectionWidgetClassRef);
+	}
 }
 void AArchVizController::BindWidgetDelegates() {
 	if (HomeWidget && HomeWidgetClassRef) {
@@ -168,6 +171,10 @@ void AArchVizController::BindWidgetDelegates() {
 		BuildingConstructionWidget->RoofDimensionZ->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoofDimensionZValueChanged);
 		BuildingConstructionWidget->DestroyRoofBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDestroyRoofBtnClicked);
 	}
+	if (MaterialSelectionWidget && MaterialSelectionWidgetClassRef) {
+		MaterialSelectionWidget->RoadMaterialScrollBox->AfterRoadMaterialSelection.BindUFunction(this, "ApplyMaterialToRoad");
+		MaterialSelectionWidget->BuildingMaterialScrollBox->AfterBuildingMaterialSelection.BindUFunction(this, "ApplyMaterialToBuildingComponents");
+	}
 }
 void AArchVizController::BeginPlay() {
 	Super::BeginPlay();
@@ -188,22 +195,31 @@ void AArchVizController::SetupInputComponent()
 	SetupDoorConstructionInputs();
 	SetupFloorConstructionInputs();
 	SetupRoofConstructionInputs(); 
+	SetupMaterialMenuInputs();
 }
 
 // Home Widget Bind Function
 void AArchVizController::UpdateWidget() {
 	switch (CurrentSelectedMode) {
 	case EModeSelected::ViewMode:
-		if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
-		if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
+		if (RoadConstructionWidget->IsInViewport() && RoadConstructionWidget) { RoadConstructionWidget->RemoveFromParent(); }
+		if (BuildingConstructionWidget->IsInViewport() && BuildingConstructionWidget) { BuildingConstructionWidget->RemoveFromParent(); }
+		if (MaterialSelectionWidget->IsInViewport() && MaterialSelectionWidget){ MaterialSelectionWidget->RemoveFromParent(); }
 		break;
 	case EModeSelected::RoadConstruction:
-		if (BuildingConstructionWidget->IsInViewport()) { BuildingConstructionWidget->RemoveFromParent(); }
-		if (RoadConstructionWidgetClassRef) { RoadConstructionWidget->AddToViewport(); }
+		if (BuildingConstructionWidget->IsInViewport() && BuildingConstructionWidget) { BuildingConstructionWidget->RemoveFromParent(); }
+		if (MaterialSelectionWidget->IsInViewport() && MaterialSelectionWidget){ MaterialSelectionWidget->RemoveFromParent(); }
+		if (RoadConstructionWidgetClassRef && RoadConstructionWidget) { RoadConstructionWidget->AddToViewport(); }
 		break;
 	case EModeSelected::BuildingConstruction:
-		if (RoadConstructionWidget->IsInViewport()) { RoadConstructionWidget->RemoveFromParent(); }
-		if (BuildingConstructionWidgetClassRef) { BuildingConstructionWidget->AddToViewport(); }
+		if (RoadConstructionWidget->IsInViewport() && RoadConstructionWidget) { RoadConstructionWidget->RemoveFromParent(); }
+		if (MaterialSelectionWidget->IsInViewport() && MaterialSelectionWidget){ MaterialSelectionWidget->RemoveFromParent(); }
+		if (BuildingConstructionWidgetClassRef && BuildingConstructionWidget) { BuildingConstructionWidget->AddToViewport(); }
+		break;
+	case EModeSelected::MaterialSelection:
+		if (RoadConstructionWidget->IsInViewport() && RoadConstructionWidget){ RoadConstructionWidget->RemoveFromParent(); }
+		if (BuildingConstructionWidget->IsInViewport() && BuildingConstructionWidget) { BuildingConstructionWidget->RemoveFromParent(); }
+		if (MaterialSelectionWidgetClassRef && MaterialSelectionWidget){ MaterialSelectionWidget->AddToViewport(); }
 		break;
 	}
 }
@@ -249,6 +265,9 @@ void AArchVizController::UpdateInputMappings() {
 		case EModeSelected::BuildingConstruction:
 			UpdateBuildingMappings();
 			break;
+		case EModeSelected::MaterialSelection:
+			Subsystem->AddMappingContext(MaterialSelectionIMC, 0);
+			break;
 		}
 	}
 }
@@ -257,10 +276,10 @@ void AArchVizController::SetDefaultMode() {
 	case EModeSelected::RoadConstruction:
 		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
 		CurrentRoadMode = ERodeMode::ConstructionMode;
+		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case EModeSelected::BuildingConstruction:
 		CurrentBuildingComponent = EBuildingComponent::None;
@@ -294,6 +313,37 @@ void AArchVizController::SetDefaultMode() {
 		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 		break;
+	case EModeSelected::MaterialSelection:
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		BuildingConstructionWidget->BuildingModeToggleBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->WallBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DoorBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->FloorBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		// Wall Editor Widgets
+		BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyWallBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->UpdateWallLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		// Door Editor Widgets
+		BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		// Floor Editor Widgets
+		BuildingConstructionWidget->FloorLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->FloorDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyFloorBtn->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		// Roof Editor Widgets
+		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
+		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 }
@@ -309,6 +359,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		UpdateInputMappings();
 	}
 	else if (SelectedItem == FString("Road Construction")) {
+		if(RoadGeneratorActor){ RoadGeneratorActor = nullptr; }
 		CurrentSelectedMode = EModeSelected::RoadConstruction;
 		SetDefaultMode();
 
@@ -322,6 +373,9 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		}
 	}
 	else if (SelectedItem == FString("Building Construction")) {
+		if(WallGeneratorActor){ WallGeneratorActor = nullptr; }
+		if(FloorGeneratorActor){ FloorGeneratorActor = nullptr; }
+		if(RoofGeneratorActor){ RoofGeneratorActor = nullptr; }
 		CurrentSelectedMode = EModeSelected::BuildingConstruction;
 		SetDefaultMode();
 
@@ -330,6 +384,19 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyFloorPreviewActor();
 
 		if (BuildingConstructionWidgetClassRef) {
+			UpdateWidget();
+			UpdateInputMappings();
+		}
+	}
+	else if (SelectedItem == FString("Material Selection")) {
+		CurrentSelectedMode = EModeSelected::MaterialSelection;
+		SetDefaultMode();
+
+		DestroyWallGeneratorActor();
+		DestroyDoorPreviewActor();
+		DestroyFloorPreviewActor();
+
+		if (MaterialSelectionWidgetClassRef) {
 			UpdateWidget();
 			UpdateInputMappings();
 		}
@@ -732,7 +799,6 @@ void AArchVizController::OnDoorBtnClicked() {
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Visible);
-	//BuildingConstructionWidget->FloorDimensions->SetVisibility(ESlateVisibility::Hidden);
 
 	CurrentBuildingComponent = EBuildingComponent::Door;
 	DestroyWallGeneratorActor();
@@ -742,7 +808,6 @@ void AArchVizController::OnDoorBtnClicked() {
 void AArchVizController::OnFloorBtnClicked() {
 	DestroyDoorPreviewActor();
 
-	//BuildingConstructionWidget->FloorDimensions->SetVisibility(ESlateVisibility::Visible);
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -758,7 +823,6 @@ void AArchVizController::OnRoofBtnClicked() {
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
-	//BuildingConstructionWidget->FloorDimensions->SetVisibility(ESlateVisibility::Hidden);
 
 	CurrentBuildingComponent = EBuildingComponent::Roof;
 	DestroyWallGeneratorActor();
@@ -987,11 +1051,27 @@ void AArchVizController::GenerateDoorOnClick() {
 
 					int32 index = WallTempActor->WallStaticMeshComponentsArr.IndexOfByKey(Cast<UStaticMeshComponent>(HitResult.GetComponent()));
 					WallTempActor->WallActorMap.Add(index, {DoorMesh, CubeComponent});
+					WallTempActor->Indices.Add(index);
 				}
 				else {
 					DoorComponent->SetRelativeRotation(FRotator(0, 90, 0));
 					DoorComponent->SetStaticMesh(DoorMesh);
 				}
+			}
+		}
+		else if (Cast<UProceduralMeshComponent>(HitResult.GetComponent())) {
+			UProceduralMeshComponent* ProceduralComponent = Cast<UProceduralMeshComponent>(HitResult.GetComponent());
+			int key{};
+			for (int i = 0; i < WallTempActor->Indices.Num(); i++) {
+				if (WallTempActor->WallActorMap[WallTempActor->Indices[i]].ProceduralMeshComponent == ProceduralComponent)
+				{
+					key = WallTempActor->Indices[i];
+					break;
+				}
+			}
+			if (WallTempActor->WallStaticMeshComponentsArr[key]) {
+				WallTempActor->WallStaticMeshComponentsArr[key]->SetRelativeRotation(FRotator(0, 90, 0));
+				WallTempActor->WallStaticMeshComponentsArr[key]->SetStaticMesh(DoorMesh);
 			}
 		}
 	}
@@ -1008,14 +1088,6 @@ void AArchVizController::SetDoorMesh(const FDoorData& DoorData) {
 	DoorMesh = DoorData.StaticMesh;
 	if (CurrentBuildingMode == EBuildingMode::EditorMode) {
 		GenerateDoorOnClick();
-	}
-	else {
-		//if (DoorStaticMeshActor) { DoorStaticMeshActor->Destroy(); }
-		/*FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		DoorStaticMeshActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-		DoorStaticMeshActor->SetMobility(EComponentMobility::Movable);
-		DoorStaticMeshActor->GetStaticMeshComponent()->SetStaticMesh(DoorMesh);*/
 	}
 }
 void AArchVizController::OnDestroyDoorBtnClicked() {
@@ -1157,9 +1229,19 @@ void AArchVizController::SetupRoofConstructionInputs() {
 
 		UInputAction* ClickforRoofConstruction = NewObject<UInputAction>(this);
 		ClickforRoofConstruction->ValueType = EInputActionValueType::Boolean;
-		RoofConstructionIMC->MapKey(ClickforRoofConstruction, EKeys::LeftMouseButton);
+		RoofConstructionIMC->MapKey(ClickforRoofConstruction, EKeys::MiddleMouseButton);
+
+		UInputAction* ClickforStartingRoofConstruction = NewObject<UInputAction>(this);
+		ClickforStartingRoofConstruction->ValueType = EInputActionValueType::Boolean;
+		RoofConstructionIMC->MapKey(ClickforStartingRoofConstruction, EKeys::LeftMouseButton);
+
+		UInputAction* ReleaseClickforCompletingRoofConstruction = NewObject<UInputAction>(this);
+		ReleaseClickforCompletingRoofConstruction->ValueType = EInputActionValueType::Boolean;
+		RoofConstructionIMC->MapKey(ReleaseClickforCompletingRoofConstruction, EKeys::LeftMouseButton);
 
 		EnhancedInputComponent->BindAction(ClickforRoofConstruction, ETriggerEvent::Completed, this, &AArchVizController::GenerateRoofOnClick);
+		EnhancedInputComponent->BindAction(ClickforStartingRoofConstruction, ETriggerEvent::Triggered, this, &AArchVizController::StartBuildingRoof);
+		EnhancedInputComponent->BindAction(ReleaseClickforCompletingRoofConstruction, ETriggerEvent::Completed, this, &AArchVizController::CompleteBuildingRoof);
 	}
 }
 void AArchVizController::GenerateRoofOnClick()
@@ -1238,6 +1320,40 @@ void AArchVizController::GenerateRoofOnClick()
 		BuildingConstructionWidget->PlayAnimation(BuildingConstructionWidget->RoofErrorMsgAnim);
 	}
 }
+void AArchVizController::StartBuildingRoof(){
+	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+
+	if(Cast<AWallGenerator>(HitResult.GetActor())) {
+		AWallGenerator* TempWallActor = Cast<AWallGenerator>(HitResult.GetActor());
+
+		if (!RoofGeneratorActor) {
+			StartRoofLocation = HitResult.Location;
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			if (RoofGeneratorActorRef) {
+				RoofGeneratorActor = GetWorld()->SpawnActor<ARoofGenerator>(RoofGeneratorActorRef, StartRoofLocation, FRotator::ZeroRotator, SpawnParams);
+			}
+		}
+		else {
+			FVector CurrentRoofLocation = HitResult.Location;
+
+			if (RoofGeneratorActor) {
+				RoofGeneratorActor->RoofMeasurements.X = FMath::Abs(CurrentRoofLocation.X - StartRoofLocation.X);
+				RoofGeneratorActor->RoofMeasurements.Y = FMath::Abs(CurrentRoofLocation.Y - StartRoofLocation.Y);
+				RoofGeneratorActor->RoofMeasurements.Z = TempWallActor->WallStaticMesh->GetBounds().GetBox().GetSize().Y;
+
+				RoofGeneratorActor->SetActorLocation(FVector((StartRoofLocation.X + CurrentRoofLocation.X) / 2, (StartRoofLocation.Y + CurrentRoofLocation.Y) / 2, TempWallActor->GetActorLocation().Z + TempWallActor->HeightOfWall));
+				RoofGeneratorActor->GenerateRoof(RoofGeneratorActor->RoofMeasurements);
+				SnapActor(12.5);
+			}
+		}
+	}
+}
+void AArchVizController::CompleteBuildingRoof(){
+	RoofGeneratorActor = nullptr;
+}
 
 // Roof Bind Function
 void AArchVizController::OnRoofLocationXValueChanged(float InValue) {
@@ -1284,5 +1400,94 @@ void AArchVizController::OnDestroyRoofBtnClicked(){
 		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+// Material Menu
+void AArchVizController::SetupMaterialMenuInputs(){
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
+		MaterialSelectionIMC = NewObject<UInputMappingContext>();
+
+		UInputAction* ClickforSelectingAssetToApplyMaterial = NewObject<UInputAction>(this);
+		ClickforSelectingAssetToApplyMaterial->ValueType = EInputActionValueType::Boolean;
+		MaterialSelectionIMC->MapKey(ClickforSelectingAssetToApplyMaterial, EKeys::LeftMouseButton);
+
+		EnhancedInputComponent->BindAction(ClickforSelectingAssetToApplyMaterial, ETriggerEvent::Completed, this, &AArchVizController::SelectAssetOnClickForMaterial);
+	}
+}
+void AArchVizController::SelectAssetOnClickForMaterial() {
+	
+	RoadGeneratorActor = nullptr;
+	WallGeneratorActor = nullptr;
+	DoorStaticMeshActor = nullptr;
+	FloorGeneratorActor = nullptr;
+	RoofGeneratorActor = nullptr;
+
+	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+
+	if (Cast<ARoadGenerator>(HitResult.GetActor())) {
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Visible);
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		RoadGeneratorActor = Cast<ARoadGenerator>(HitResult.GetActor());
+	}
+	else if (Cast<AWallGenerator>(HitResult.GetActor())) {
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Visible);
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		WallGeneratorActor = Cast<AWallGenerator>(HitResult.GetActor());
+	}
+	else if (Cast<AFloorGenerator>(HitResult.GetActor())) {
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Visible);
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		FloorGeneratorActor = Cast<AFloorGenerator>(HitResult.GetActor());
+	}
+	else if (Cast<ARoofGenerator>(HitResult.GetActor())) {
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Visible);
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		RoofGeneratorActor = Cast<ARoofGenerator>(HitResult.GetActor());
+	}
+	else {
+		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+void AArchVizController::ApplyMaterialToRoad(const FRoadMaterialData& RoadMaterialData) {
+	if (RoadGeneratorActor) {
+		UMaterialInstanceDynamic* DynamicRoadMaterial = UMaterialInstanceDynamic::Create(RoadMaterialData.Material, this);
+		if (DynamicRoadMaterial) {
+			float TileX = (RoadGeneratorActor->RoadMeasurements.X) / 200.0f;
+			float TileY = 1;
+			DynamicRoadMaterial->SetScalarParameterValue("TileX", TileX);
+			DynamicRoadMaterial->SetScalarParameterValue("TileY", TileY);
+			RoadGeneratorActor->RoadProceduralMeshComponent->SetMaterial(0, DynamicRoadMaterial);
+		}
+	}
+}
+void AArchVizController::ApplyMaterialToBuildingComponents(const FBuildingMaterialData& BuildingMaterialData) {
+	if (WallGeneratorActor) {
+		WallGeneratorActor->ApplyMaterialToWallActor(BuildingMaterialData.Material);
+	}
+	else if (FloorGeneratorActor) {
+		UMaterialInstanceDynamic* DynamicFloorMaterial = UMaterialInstanceDynamic::Create(BuildingMaterialData.Material, this);
+		if (DynamicFloorMaterial) {
+			float TileX = (FloorGeneratorActor->FloorMeasurements.X) / 200.0f;
+			float TileY = (FloorGeneratorActor->FloorMeasurements.Y) / 200.0f;
+			DynamicFloorMaterial->SetScalarParameterValue("TileX", TileX);
+			DynamicFloorMaterial->SetScalarParameterValue("TileY", TileY);
+			FloorGeneratorActor->FloorProceduralMeshComponent->SetMaterial(0, DynamicFloorMaterial);
+		}
+	}
+	else if (RoofGeneratorActor) {
+		UMaterialInstanceDynamic* DynamicRoofMaterial = UMaterialInstanceDynamic::Create(BuildingMaterialData.Material, this);
+		if (DynamicRoofMaterial) {
+			float TileX = (RoofGeneratorActor->RoofMeasurements.X) / 200.0f;
+			float TileY = (RoofGeneratorActor->RoofMeasurements.Y) / 200.0f;
+			DynamicRoofMaterial->SetScalarParameterValue("TileX", TileX);
+			DynamicRoofMaterial->SetScalarParameterValue("TileY", TileY);
+			RoofGeneratorActor->RoofProceduralMeshComponent->SetMaterial(0, DynamicRoofMaterial);
+		}
 	}
 }

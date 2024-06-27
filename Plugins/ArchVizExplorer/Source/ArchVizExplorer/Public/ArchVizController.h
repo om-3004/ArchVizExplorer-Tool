@@ -15,6 +15,7 @@
 #include "Widgets/HomeWidget.h"
 #include "Widgets/RoadConstructionWidget.h"
 #include "Widgets/BuildingConstructionWidget.h"
+#include "Widgets/MaterialSelectionWidget.h"
 
 #include "WallGenerator.h"
 #include "FloorGenerator.h"
@@ -280,11 +281,17 @@ private:
 	TSubclassOf<ARoofGenerator> RoofGeneratorActorRef;
 	UPROPERTY()
 	UInputMappingContext* RoofConstructionIMC;
-	// Function - Floor
+	UPROPERTY()
+	FVector StartRoofLocation{};
+	// Function - Roof
 	UFUNCTION()
 	void SetupRoofConstructionInputs();
 	UFUNCTION()
 	void GenerateRoofOnClick();
+	UFUNCTION()
+	void StartBuildingRoof();
+	UFUNCTION()
+	void CompleteBuildingRoof();
 	// Widget Bind Function - Roof
 	UFUNCTION()
 	void OnRoofBtnClicked();
@@ -302,4 +309,22 @@ private:
 	void OnRoofDimensionZValueChanged(float InValue);
 	UFUNCTION()
 	void OnDestroyRoofBtnClicked();
+
+	// Material Selection Widget
+	UPROPERTY()
+	UMaterialSelectionWidget* MaterialSelectionWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<UMaterialSelectionWidget> MaterialSelectionWidgetClassRef;
+	// Material Selection
+	UPROPERTY()
+	UInputMappingContext* MaterialSelectionIMC;
+	// Function - Material Selection
+	UFUNCTION()
+	void SetupMaterialMenuInputs();
+	UFUNCTION()
+	void SelectAssetOnClickForMaterial();
+	UFUNCTION()
+	void ApplyMaterialToRoad(const FRoadMaterialData& RoadMaterialData);
+	UFUNCTION()
+	void ApplyMaterialToBuildingComponents(const FBuildingMaterialData& BuildingMaterialData);
 };

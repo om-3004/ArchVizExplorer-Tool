@@ -43,6 +43,8 @@ void ARoadGenerator::DrawTriangleFromVertex(int32 Vertex0, int32 Vertex1, int32 
 
 void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset)
 {
+	RoadMeasurements = Dimensions;
+	
 	Vertices.Reset();
 	Triangles.Reset();
 	Normals.Reset();
