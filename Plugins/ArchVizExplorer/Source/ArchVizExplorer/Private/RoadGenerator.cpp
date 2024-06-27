@@ -9,8 +9,8 @@ ARoadGenerator::ARoadGenerator()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ProceduralMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh Component"));
-	RootComponent = ProceduralMeshComponent;
+	RoadProceduralMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh Component"));
+	RootComponent = RoadProceduralMeshComponent;
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +41,7 @@ void ARoadGenerator::DrawTriangleFromVertex(int32 Vertex0, int32 Vertex1, int32 
 	Triangles.Add(Vertex2);
 }
 
-void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset, UMaterialInterface* Material)
+void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset)
 {
 	Vertices.Reset();
 	Triangles.Reset();
@@ -139,6 +139,6 @@ void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 		}
 	}
 
-	ProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	ProceduralMeshComponent->SetMaterial(0, Material);
+	RoadProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
+	if(RoadProceduralMeshMaterial) { RoadProceduralMeshComponent->SetMaterial(0, RoadProceduralMeshMaterial);}
 }

@@ -20,10 +20,10 @@ public:
 	ARoadGenerator();
 
 	UFUNCTION(BlueprintCallable, Category = "RoadGenerator")
-	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset, UMaterialInterface* Material);
+	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset);
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "RoadGenerator")
-	UProceduralMeshComponent* ProceduralMeshComponent;
+	UProceduralMeshComponent* RoadProceduralMeshComponent;
 
 
 protected:
@@ -35,6 +35,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "RoadGenerator | Material")
+	UMaterialInterface* RoadProceduralMeshMaterial;
+
 	UPROPERTY(VisibleDefaultsOnly, Category = "RoadGenerator")
 	TArray<FVector> Vertices;
 

@@ -19,6 +19,7 @@
 #include "WallGenerator.h"
 #include "FloorGenerator.h"
 #include "RoofGenerator.h"
+#include "Engine/StaticMeshActor.h"
 
 #include "ArchVizController.generated.h"
 
@@ -99,12 +100,10 @@ private:
 	TSubclassOf<URoadConstructionWidget> RoadConstructionWidgetClassRef;
 	UPROPERTY()
 	ARoadGenerator* RoadGeneratorActor;
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Road")
 	TSubclassOf<ARoadGenerator> RoadGeneratorActorRef;
 	UPROPERTY()
 	UInputMappingContext* RoadConstructionIMC;
-	UPROPERTY(EditDefaultsOnly, Category = "ArchVizController | Road")
-	UMaterialInterface* RoadMaterial;
 	UPROPERTY()
 	FVector RoadDimensions;
 	UPROPERTY()
@@ -217,11 +216,17 @@ private:
 	UStaticMesh* DoorMesh{};
 	UPROPERTY()
 	UInputMappingContext* DoorConstructionIMC;
+	UPROPERTY()
+	AStaticMeshActor* DoorStaticMeshActor;
 	// Function - Door
 	UFUNCTION()
 	void SetupDoorConstructionInputs();
 	UFUNCTION()
+	void PreviewDoor();
+	UFUNCTION()
 	void GenerateDoorOnClick();
+	UFUNCTION()
+	void DestroyDoorPreviewActor();
 	// Widget Bind Function - Door
 	UFUNCTION()
 	void OnDoorBtnClicked();
@@ -248,6 +253,8 @@ private:
 	void StartBuildingFloor();
 	UFUNCTION()
 	void CompleteBuildingFloor();
+	UFUNCTION()
+	void DestroyFloorPreviewActor();
 	// Widget Bind Function - Floor
 	UFUNCTION()
 	void OnFloorBtnClicked();
@@ -295,5 +302,4 @@ private:
 	void OnRoofDimensionZValueChanged(float InValue);
 	UFUNCTION()
 	void OnDestroyRoofBtnClicked();
-
 };
