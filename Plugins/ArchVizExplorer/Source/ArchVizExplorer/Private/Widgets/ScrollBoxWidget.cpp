@@ -5,13 +5,14 @@
 
 TSharedRef<SWidget> UScrollBoxWidget::RebuildWidget()
 {
-	ScrollBoxAsset = SNew(SScrollBoxSlate).InWallAssetManager(WallDataAsset).InDoorAssetManager(DoorDataAsset).InRoadMaterialAssetManager(RoadMaterialDataAsset).InBuildingMaterialAssetManager(BuildingMaterialDataAsset).InThumbnailSizeScale(ThumbnailSizeScale).InScrollBoxType(ScrollBoxType);
+	ScrollBoxAsset = SNew(SScrollBoxSlate).InWallAssetManager(WallDataAsset).InDoorAssetManager(DoorDataAsset).InRoadMaterialAssetManager(RoadMaterialDataAsset).InBuildingMaterialAssetManager(BuildingMaterialDataAsset).InInteriorDesignAssetManager(InteriorDesignDataAsset).InThumbnailSizeScale(ThumbnailSizeScale).InScrollBoxType(ScrollBoxType);
 
 	if (ScrollBoxAsset.IsValid()) {
 		ScrollBoxAsset->OnWallSelection.BindUFunction(this, "PassWallInController");
 		ScrollBoxAsset->OnDoorSelection.BindUFunction(this, "PassDoorInController");
 		ScrollBoxAsset->OnRoadMaterialSelection.BindUFunction(this, "PassRoadMaterialInController");
 		ScrollBoxAsset->OnBuildingMaterialSelection.BindUFunction(this, "PassBuildingMaterialInController");
+		ScrollBoxAsset->OnInteriorDesignSelection.BindUFunction(this, "PassInteriorDesignInController");
 	}
 
 	return ScrollBoxAsset.ToSharedRef();
@@ -37,6 +38,7 @@ void UScrollBoxWidget::SynchronizeProperties()
 		ScrollBoxAsset->WallDataAsset = WallDataAsset;
 		ScrollBoxAsset->RoadMaterialDataAsset = RoadMaterialDataAsset;
 		ScrollBoxAsset->BuildingMaterialDataAsset = BuildingMaterialDataAsset;
+		ScrollBoxAsset->InteriorDesignDataAsset = InteriorDesignDataAsset;
 		ScrollBoxAsset->ScrollBoxType = ScrollBoxType;
 		ScrollBoxAsset->ThumbnailSizeScale = ThumbnailSizeScale;
 		ScrollBoxAsset->ScrollBoxSelection();
@@ -59,4 +61,9 @@ void UScrollBoxWidget::PassRoadMaterialInController(const FRoadMaterialData& Roa
 void UScrollBoxWidget::PassBuildingMaterialInController(const FBuildingMaterialData& BuildingMaterialData)
 {
 	AfterBuildingMaterialSelection.ExecuteIfBound(BuildingMaterialData);
+}
+
+void UScrollBoxWidget::PassInteriorDesignInController(const FInteriorDesignData& InteriorDesignData)
+{
+	AfterInteriorDesignSelection.ExecuteIfBound(InteriorDesignData);
 }

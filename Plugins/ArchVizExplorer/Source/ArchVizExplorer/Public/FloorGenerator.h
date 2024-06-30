@@ -18,11 +18,19 @@ public:
 	UFUNCTION()
 	void GenerateFloor(const FVector& Dimensions);
 
+	UFUNCTION()
+	void ApplyMaterialToFloorActor(UMaterialInterface* Material);
+
 	UPROPERTY()
 	FVector FloorMeasurements{};
 
 	UPROPERTY()
 	UProceduralMeshComponent* FloorProceduralMeshComponent;
+
+	UPROPERTY()
+	UMaterialInterface* FloorMaterial;
+
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

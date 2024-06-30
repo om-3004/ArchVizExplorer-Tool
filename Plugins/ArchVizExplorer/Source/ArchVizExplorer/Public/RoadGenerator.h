@@ -19,13 +19,20 @@ public:
 	ARoadGenerator();
 
 	UFUNCTION(BlueprintCallable, Category = "RoadGenerator")
-	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset);
+	void GenerateRoad(const FVector& Dimensions);
+
+	UFUNCTION()
+	void ApplyMaterialToRoadActor(UMaterialInterface* Material);
 
 	UPROPERTY()
 	UProceduralMeshComponent* RoadProceduralMeshComponent;
 
 	UPROPERTY()
 	FVector RoadMeasurements{};
+
+	UPROPERTY()
+	UMaterialInterface* RoadMaterial;
+
 protected:
 	virtual void BeginPlay() override;
 

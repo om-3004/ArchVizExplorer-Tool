@@ -13,6 +13,8 @@ DECLARE_DELEGATE_OneParam(FAfterDoorSelection, const FDoorData&)
 DECLARE_DELEGATE_OneParam(FAfterRoadMaterialSelection, const FRoadMaterialData&)
 DECLARE_DELEGATE_OneParam(FAfterBuildingMaterialSelection, const FBuildingMaterialData&)
 
+DECLARE_DELEGATE_OneParam(FAfterInteriorDesignSelection, const FInteriorDesignData&)
+
 UCLASS()
 class ARCHVIZEXPLORER_API UScrollBoxWidget : public UWidget
 {
@@ -24,6 +26,7 @@ public:
 	FAfterDoorSelection AfterDoorSelection;
 	FAfterRoadMaterialSelection AfterRoadMaterialSelection;
 	FAfterBuildingMaterialSelection AfterBuildingMaterialSelection;
+	FAfterInteriorDesignSelection AfterInteriorDesignSelection;
 
 protected:
 	virtual TSharedRef<SWidget>RebuildWidget() override;
@@ -47,6 +50,9 @@ private:
 	UBuildingMaterialDataAsset* BuildingMaterialDataAsset;
 
 	UPROPERTY(EditAnywhere, Category = "ScrollBoxWidget")
+	UInteriorDataAsset* InteriorDesignDataAsset;
+
+	UPROPERTY(EditAnywhere, Category = "ScrollBoxWidget")
 	EScrollBoxType ScrollBoxType;
 
 	UPROPERTY(EditAnywhere, Category = "ScrollBoxWidget")
@@ -63,4 +69,7 @@ private:
 	
 	UFUNCTION()
 	void PassBuildingMaterialInController(const FBuildingMaterialData& BuildingMaterialData);
+
+	UFUNCTION()
+	void PassInteriorDesignInController(const FInteriorDesignData& InteriorDesignData);
 };

@@ -92,6 +92,11 @@ void AWallGenerator::UpdateDoorsAndProceduralMeshComponent(int32 NoOfSegments) {
 }
 
 void AWallGenerator::GenerateWall(const int32& NoOfSegments) {
+	SegmentsNo = NoOfSegments;
+	if(WallProceduralMeshMaterial) {
+		WallMaterial = WallProceduralMeshMaterial;
+	}
+
 	DestroyComponents();
 	CheckReducedSegments(NoOfSegments);
 
@@ -195,7 +200,9 @@ void AWallGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	if(WallProceduralMeshMaterial) {CubeComponent->SetMaterial(0, WallProceduralMeshMaterial);}
 }
 
-void AWallGenerator::ApplyMaterialToWallActor(UMaterialInterface* WallMaterial){
+void AWallGenerator::ApplyMaterialToWallActor(UMaterialInterface* Material){
+	WallMaterial = Material;
+	
 	UMaterialInstanceDynamic* DynamicWallMaterial1 = UMaterialInstanceDynamic::Create(WallMaterial, this);
 	UMaterialInstanceDynamic* DynamicWallMaterial2 = UMaterialInstanceDynamic::Create(WallMaterial, this);
 

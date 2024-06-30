@@ -41,9 +41,10 @@ void ARoadGenerator::DrawTriangleFromVertex(int32 Vertex0, int32 Vertex1, int32 
 	Triangles.Add(Vertex2);
 }
 
-void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset)
+void ARoadGenerator::GenerateRoad(const FVector& Dimensions)
 {
 	RoadMeasurements = Dimensions;
+	FVector LocationOffset = {0, 0, Dimensions.Z / 2};
 	
 	Vertices.Reset();
 	Triangles.Reset();
@@ -142,5 +143,19 @@ void ARoadGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	}
 
 	RoadProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	if(RoadProceduralMeshMaterial) { RoadProceduralMeshComponent->SetMaterial(0, RoadProceduralMeshMaterial);}
+	if(RoadMaterial) { RoadProceduralMeshComponent->SetMaterial(0, RoadMaterial);}
+}
+
+void ARoadGenerator::ApplyMaterialToRoadActor(UMaterialInterface* Material) {
+	RoadMaterial = Material;
+
+	UMaterialInstanceDynamic* DynamicRoadMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	if (DynamicRoadMaterial) {
+		float TileX = (RoadMeasurements.X) / 200.0f;
+		float TileY = 1;
+		DynamicRoadMaterial->SetScalarParameterValue("TileX", TileX);
+		DynamicRoadMaterial->SetScalarParameterValue("TileY", TileY);
+		RoadProceduralMeshComponent->SetMaterial(0, DynamicRoadMaterial);
+	}
+	
 }

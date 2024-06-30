@@ -24,8 +24,14 @@ public:
 	UFUNCTION()
 	void GenerateCube(const FVector& Dimensions, const FVector& LocationOffset);
 
+	UFUNCTION()
+	void ApplyMaterialToRoofActor(UMaterialInterface* Material);
+
 	UPROPERTY()
 	UProceduralMeshComponent* RoofProceduralMeshComponent;
+
+	UPROPERTY()
+	UMaterialInterface* RoofMaterial;
 
 protected:
 	virtual void BeginPlay() override;

@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 
 #include "Components/ComboBoxString.h"
+#include "Components/Button.h"
+#include "Components/EditableText.h"
 
 #include "HomeWidget.generated.h"
 
@@ -17,5 +19,20 @@ class ARCHVIZEXPLORER_API UHomeWidget : public UUserWidget
 public:
 	UPROPERTY(meta = (BindWidget))
 	UComboBoxString* ModeSelectionDropdown;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* SaveTemplateBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* LoadTemplateBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* SaveBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CloseBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableText* SlotNameTxt;
 
 };

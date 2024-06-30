@@ -10,17 +10,22 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ProceduralMeshComponent.h"
+
 #include "RoadGenerator.h"
+#include "InteriorDesign.h"
+#include "WallGenerator.h"
+#include "FloorGenerator.h"
+#include "RoofGenerator.h"
+#include "Engine/StaticMeshActor.h"
 
 #include "Widgets/HomeWidget.h"
 #include "Widgets/RoadConstructionWidget.h"
 #include "Widgets/BuildingConstructionWidget.h"
 #include "Widgets/MaterialSelectionWidget.h"
+#include "Widgets/InteriorDesignWidget.h"
 
-#include "WallGenerator.h"
-#include "FloorGenerator.h"
-#include "RoofGenerator.h"
-#include "Engine/StaticMeshActor.h"
+#include "ArchVizExplorerSaveGame.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "ArchVizController.generated.h"
 
@@ -327,4 +332,46 @@ private:
 	void ApplyMaterialToRoad(const FRoadMaterialData& RoadMaterialData);
 	UFUNCTION()
 	void ApplyMaterialToBuildingComponents(const FBuildingMaterialData& BuildingMaterialData);
+
+	// Interior Design Widget
+	UPROPERTY()
+	UInteriorDesignWidget* InteriorDesignWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<UInteriorDesignWidget> InteriorDesignWidgetClassRef;
+	// Interior Design
+	UPROPERTY()
+	UInputMappingContext* InteriorDesignIMC;
+	UPROPERTY()
+	AInteriorDesign* InteriorDesignActor;
+	UPROPERTY()
+	UStaticMesh* InteriorStaticMesh;
+	UPROPERTY()
+	EBuildingAsset BuildingAssetSelectedController;
+	// Function - Interior Design
+	UFUNCTION()
+	void SetupInteriorDesignInputs();
+	UFUNCTION()
+	void PlaceInteriorOnClick();
+	UFUNCTION()
+	void RotateInterior();
+	UFUNCTION()
+	void SetInterior(const FInteriorDesignData& InteriorDesignData);
+	UFUNCTION()
+	void DestroyInteriorPreviewActor();
+	UFUNCTION()
+	void PreviewInteriorOnWall();
+	UFUNCTION()
+	void PreviewInteriorOnFloor();
+	UFUNCTION()
+	void PreviewInteriorOnRoof();
+
+	// Save / Load
+	UFUNCTION()
+	void ShowSaveBtn();
+	UFUNCTION()
+	void HideSaveBtn();
+	UFUNCTION()
+	void SaveTemplate();
+	UFUNCTION()
+	void LoadTemplate();
 };

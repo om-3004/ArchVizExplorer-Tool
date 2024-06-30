@@ -9,6 +9,7 @@
 #include "DataAssets/DoorDataAsset.h"
 #include "DataAssets/RoadMaterialDataAsset.h"
 #include "DataAssets/BuildingMaterialDataAsset.h"
+#include "DataAssets/InteriorDataAsset.h"
 
 #include "Widgets/SCompoundWidget.h"
 
@@ -18,12 +19,17 @@ DECLARE_DELEGATE_OneParam(FOnDoorSelection, const FDoorData&)
 DECLARE_DELEGATE_OneParam(FOnRoadMaterialSelection, const FRoadMaterialData&)
 DECLARE_DELEGATE_OneParam(FOnBuildingMaterialSelection, const FBuildingMaterialData&)
 
+DECLARE_DELEGATE_OneParam(FOnInteriorDesignSelection, const FInteriorDesignData&)
+
 UENUM()
 enum class EScrollBoxType : uint8 {
 	WallScrollBox,
 	DoorScrollBox,
 	RoadMaterialScrollBox,
 	BuildingMaterialScrollBox,
+	WallInteriorScrollBox,
+	FloorInteriorScrollBox,
+	RoofInteriorScrollBox,
 };
 
 class ARCHVIZEXPLORER_API SScrollBoxSlate : public SCompoundWidget
@@ -37,6 +43,8 @@ public:
 		SLATE_ARGUMENT(TWeakObjectPtr<URoadMaterialDataAsset>, InRoadMaterialAssetManager)
 		SLATE_ARGUMENT(TWeakObjectPtr<UBuildingMaterialDataAsset>, InBuildingMaterialAssetManager)
 
+		SLATE_ARGUMENT(TWeakObjectPtr<UInteriorDataAsset>, InInteriorDesignAssetManager)
+
 		SLATE_ARGUMENT(EScrollBoxType, InScrollBoxType)
 		SLATE_ARGUMENT(float, InThumbnailSizeScale)
 
@@ -48,11 +56,13 @@ public:
 	FOnDoorSelection OnDoorSelection;
 	FOnRoadMaterialSelection OnRoadMaterialSelection;
 	FOnBuildingMaterialSelection OnBuildingMaterialSelection;
+	FOnInteriorDesignSelection OnInteriorDesignSelection;
 
 	TWeakObjectPtr<UWallDataAsset> WallDataAsset;
 	TWeakObjectPtr<UDoorDataAsset> DoorDataAsset;
 	TWeakObjectPtr<URoadMaterialDataAsset> RoadMaterialDataAsset;
 	TWeakObjectPtr<UBuildingMaterialDataAsset> BuildingMaterialDataAsset;
+	TWeakObjectPtr<UInteriorDataAsset> InteriorDesignDataAsset;
 
 	EScrollBoxType ScrollBoxType;
 
@@ -71,10 +81,12 @@ private:
 	void PopulateDoorScrollBox();
 	void PopulateRoadMaterialScrollBox();
 	void PopulateBuildingMaterialScrollBox();
+	void PopulateInteriorDesignScrollBox();
 
 	TWeakObjectPtr<UWallDataAsset> WallDataAssetPtr;
 	TWeakObjectPtr<UDoorDataAsset> DoorDataAssetPtr;
 	TWeakObjectPtr<URoadMaterialDataAsset> RoadMaterialDataAssetPtr;
 	TWeakObjectPtr<UBuildingMaterialDataAsset> BuildingMaterialDataAssetPtr;
+	TWeakObjectPtr<UInteriorDataAsset> InteriorDesignDataAssetPtr;
 
 };

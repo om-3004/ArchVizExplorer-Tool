@@ -25,6 +25,7 @@ void ARoofGenerator::Tick(float DeltaTime)
 
 void ARoofGenerator::GenerateRoof(const FVector& Dimensions)
 {
+	RoofMeasurements = Dimensions;
 	GenerateCube(Dimensions, {0, 0, Dimensions.Z / 2});
 }
 
@@ -105,4 +106,18 @@ void ARoofGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 
 	RoofProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
 	if(RoofProceduralMeshMaterial) {RoofProceduralMeshComponent->SetMaterial(0, RoofProceduralMeshMaterial);}
+}
+
+void ARoofGenerator::ApplyMaterialToRoofActor(UMaterialInterface* Material)
+{
+	RoofMaterial = Material;
+
+	UMaterialInstanceDynamic* DynamicRoofMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	if (DynamicRoofMaterial) {
+		float TileX = (RoofMeasurements.X) / 200.0f;
+		float TileY = (RoofMeasurements.Y) / 200.0f;
+		DynamicRoofMaterial->SetScalarParameterValue("TileX", TileX);
+		DynamicRoofMaterial->SetScalarParameterValue("TileY", TileY);
+		RoofProceduralMeshComponent->SetMaterial(0, DynamicRoofMaterial);
+	}
 }

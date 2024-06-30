@@ -12,6 +12,7 @@ void SScrollBoxSlate::Construct(const FArguments& InArgs)
 	DoorDataAssetPtr = InArgs._InDoorAssetManager;
 	RoadMaterialDataAssetPtr = InArgs._InRoadMaterialAssetManager;
 	BuildingMaterialDataAssetPtr = InArgs._InBuildingMaterialAssetManager;
+	InteriorDesignDataAssetPtr = InArgs._InInteriorDesignAssetManager;
 	ScrollBoxType = InArgs._InScrollBoxType;
 	ThumbnailSizeScale = InArgs._InThumbnailSizeScale;
 
@@ -64,6 +65,15 @@ void SScrollBoxSlate::ScrollBoxSelection()
 		break;
 	case EScrollBoxType::BuildingMaterialScrollBox:
 		PopulateBuildingMaterialScrollBox();
+		break;
+	case EScrollBoxType::WallInteriorScrollBox:
+		PopulateInteriorDesignScrollBox();
+		break;
+	case EScrollBoxType::FloorInteriorScrollBox:
+		PopulateInteriorDesignScrollBox();
+		break;
+	case EScrollBoxType::RoofInteriorScrollBox:
+		PopulateInteriorDesignScrollBox();
 		break;
 	}
 }
@@ -129,7 +139,6 @@ void SScrollBoxSlate::PopulateWallScrollBox()
 		}
 	}
 }
-
 void SScrollBoxSlate::PopulateDoorScrollBox()
 {
 	RootBoxName->SetText(FText::FromString("Door"));
@@ -253,7 +262,6 @@ void SScrollBoxSlate::PopulateRoadMaterialScrollBox()
 		}
 	}
 }
-
 void SScrollBoxSlate::PopulateBuildingMaterialScrollBox()
 {
 	RootBoxName->SetText(FText::FromString("Building Material"));
@@ -264,8 +272,6 @@ void SScrollBoxSlate::PopulateBuildingMaterialScrollBox()
 		{
 			if (BuildingMaterialData.Image)
 			{
-				//TSharedPtr<STextBlock> Name = SNew(STextBlock).Text(RoadMaterialData.Name).Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 20)).ColorAndOpacity(FSlateColor(FLinearColor(0.946289f, 0.984314f, 0.626183f, 1.0f)));
-
 				FSlateBrush* SlateBrush = new FSlateBrush();
 				SlateBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
 				FSlateBrushOutlineSettings OutlineSettings{};
@@ -310,6 +316,225 @@ void SScrollBoxSlate::PopulateBuildingMaterialScrollBox()
 					[
 						ScrollBoxVerticalBox.ToSharedRef()
 					];
+
+			}
+		}
+	}
+}
+
+void SScrollBoxSlate::PopulateInteriorDesignScrollBox() {
+	ScrollBox->ClearChildren();
+
+	if (ScrollBoxType == EScrollBoxType::WallInteriorScrollBox) {
+		RootBoxName->SetText(FText::FromString("Wall Interior"));
+	}
+	else if (ScrollBoxType == EScrollBoxType::FloorInteriorScrollBox) {
+		RootBoxName->SetText(FText::FromString("Floor Interior"));
+	}
+	else if (ScrollBoxType == EScrollBoxType::RoofInteriorScrollBox) {
+		RootBoxName->SetText(FText::FromString("Roof Interior"));
+	}
+
+
+	if (InteriorDesignDataAssetPtr.IsValid())
+	{
+		for (const FInteriorDesignData& InteriorDesignData : InteriorDesignDataAssetPtr->InteriorDesignDataArray)
+		{
+			if (InteriorDesignData.InteriorImage)
+			{
+				/*FSlateBrush* SlateBrush = new FSlateBrush();
+				SlateBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+				FSlateBrushOutlineSettings OutlineSettings{};
+				OutlineSettings.CornerRadii = FVector4{ 5.f , 5.f ,5.f , 5.f };
+				OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+				SlateBrush->OutlineSettings = OutlineSettings;*/
+
+				//FSlateBrush* SlateBrush{};
+				//FSlateBrushOutlineSettings OutlineSettings{};
+
+				if(ScrollBoxType == EScrollBoxType::WallInteriorScrollBox) {
+					if (InteriorDesignData.BuildingAsset == EBuildingAsset::Wall) {
+
+						FSlateBrush* SlateBrush = new FSlateBrush();
+						SlateBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						FSlateBrushOutlineSettings OutlineSettings{};
+						OutlineSettings.CornerRadii = FVector4{ 5.f , 5.f ,5.f , 5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						SlateBrush->OutlineSettings = OutlineSettings;
+
+						SlateBrush->SetResourceObject(InteriorDesignData.InteriorImage);
+						SlateBrush->ImageSize = FVector2D(ThumbnailSizeScale);
+
+						TSharedPtr<SImage> ThumbnailImage = SNew(SImage).Image(SlateBrush).Cursor(EMouseCursor::Hand)
+							.OnMouseButtonDown_Lambda([this, &InteriorDesignData](const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
+							if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) {
+								OnInteriorDesignSelection.ExecuteIfBound(InteriorDesignData);
+								return FReply::Handled();
+							}
+							return FReply::Unhandled();
+								});
+
+						TSharedPtr<SBorder> ScrollBoxBorder = SNew(SBorder);
+						FSlateColorBrush* ColorBrush = new FSlateColorBrush(FLinearColor(0.946289f, 0.984314f, 0.626183f, 1.0f));
+						ColorBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						OutlineSettings.CornerRadii = FVector4{ 5.f ,5.f ,5.f ,5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						ColorBrush->OutlineSettings = OutlineSettings;
+
+						ScrollBoxBorder->SetBorderImage(ColorBrush);
+						ScrollBoxBorder->SetPadding(FMargin(1, 1, 1, 1));
+
+						ScrollBoxBorder->SetContent(ThumbnailImage.ToSharedRef());
+						TSharedPtr<SVerticalBox> ScrollBoxVerticalBox = SNew(SVerticalBox);
+
+						ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).Padding(5)
+							[
+								ScrollBoxBorder.ToSharedRef()
+							];
+						/*ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).AutoHeight()
+							[
+								Name.ToSharedRef()
+							];*/
+						ScrollBox->AddSlot()
+							[
+								ScrollBoxVerticalBox.ToSharedRef()
+							];
+					}
+
+				}
+				else if (ScrollBoxType == EScrollBoxType::FloorInteriorScrollBox) {
+					if (InteriorDesignData.BuildingAsset == EBuildingAsset::Floor) {
+
+						FSlateBrush* SlateBrush = new FSlateBrush();
+						SlateBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						FSlateBrushOutlineSettings OutlineSettings{};
+						OutlineSettings.CornerRadii = FVector4{ 5.f , 5.f ,5.f , 5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						SlateBrush->OutlineSettings = OutlineSettings;
+
+						SlateBrush->SetResourceObject(InteriorDesignData.InteriorImage);
+						SlateBrush->ImageSize = FVector2D(ThumbnailSizeScale);
+
+						TSharedPtr<SImage> ThumbnailImage = SNew(SImage).Image(SlateBrush).Cursor(EMouseCursor::Hand)
+							.OnMouseButtonDown_Lambda([this, &InteriorDesignData](const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
+							if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) {
+								OnInteriorDesignSelection.ExecuteIfBound(InteriorDesignData);
+								return FReply::Handled();
+							}
+							return FReply::Unhandled();
+								});
+
+						TSharedPtr<SBorder> ScrollBoxBorder = SNew(SBorder);
+						FSlateColorBrush* ColorBrush = new FSlateColorBrush(FLinearColor(0.946289f, 0.984314f, 0.626183f, 1.0f));
+						ColorBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						OutlineSettings.CornerRadii = FVector4{ 5.f ,5.f ,5.f ,5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						ColorBrush->OutlineSettings = OutlineSettings;
+
+						ScrollBoxBorder->SetBorderImage(ColorBrush);
+						ScrollBoxBorder->SetPadding(FMargin(1, 1, 1, 1));
+
+						ScrollBoxBorder->SetContent(ThumbnailImage.ToSharedRef());
+						TSharedPtr<SVerticalBox> ScrollBoxVerticalBox = SNew(SVerticalBox);
+
+						ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).Padding(5)
+							[
+								ScrollBoxBorder.ToSharedRef()
+							];
+						/*ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).AutoHeight()
+							[
+								Name.ToSharedRef()
+							];*/
+						ScrollBox->AddSlot()
+							[
+								ScrollBoxVerticalBox.ToSharedRef()
+							];
+					}
+				}
+				else if (ScrollBoxType == EScrollBoxType::RoofInteriorScrollBox) {
+					if (InteriorDesignData.BuildingAsset == EBuildingAsset::Roof) {
+
+						FSlateBrush* SlateBrush = new FSlateBrush();
+						SlateBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						FSlateBrushOutlineSettings OutlineSettings{};
+						OutlineSettings.CornerRadii = FVector4{ 5.f , 5.f ,5.f , 5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						SlateBrush->OutlineSettings = OutlineSettings;
+
+						SlateBrush->SetResourceObject(InteriorDesignData.InteriorImage);
+						SlateBrush->ImageSize = FVector2D(ThumbnailSizeScale);
+
+						TSharedPtr<SImage> ThumbnailImage = SNew(SImage).Image(SlateBrush).Cursor(EMouseCursor::Hand)
+							.OnMouseButtonDown_Lambda([this, &InteriorDesignData](const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
+							if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) {
+								OnInteriorDesignSelection.ExecuteIfBound(InteriorDesignData);
+								return FReply::Handled();
+							}
+							return FReply::Unhandled();
+								});
+
+						TSharedPtr<SBorder> ScrollBoxBorder = SNew(SBorder);
+						FSlateColorBrush* ColorBrush = new FSlateColorBrush(FLinearColor(0.946289f, 0.984314f, 0.626183f, 1.0f));
+						ColorBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+						OutlineSettings.CornerRadii = FVector4{ 5.f ,5.f ,5.f ,5.f };
+						OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+						ColorBrush->OutlineSettings = OutlineSettings;
+
+						ScrollBoxBorder->SetBorderImage(ColorBrush);
+						ScrollBoxBorder->SetPadding(FMargin(1, 1, 1, 1));
+
+						ScrollBoxBorder->SetContent(ThumbnailImage.ToSharedRef());
+						TSharedPtr<SVerticalBox> ScrollBoxVerticalBox = SNew(SVerticalBox);
+
+						ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).Padding(5)
+							[
+								ScrollBoxBorder.ToSharedRef()
+							];
+						/*ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).AutoHeight()
+							[
+								Name.ToSharedRef()
+							];*/
+						ScrollBox->AddSlot()
+							[
+								ScrollBoxVerticalBox.ToSharedRef()
+							];
+					}
+				}
+
+				//TSharedPtr<SImage> ThumbnailImage = SNew(SImage).Image(SlateBrush).Cursor(EMouseCursor::Hand)
+				//	.OnMouseButtonDown_Lambda([this, &InteriorDesignData](const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) {
+				//	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) {
+				//		OnInteriorDesignSelection.ExecuteIfBound(InteriorDesignData);
+				//		return FReply::Handled();
+				//	}
+				//	return FReply::Unhandled();
+				//		});
+
+				//TSharedPtr<SBorder> ScrollBoxBorder = SNew(SBorder);
+				//FSlateColorBrush* ColorBrush = new FSlateColorBrush(FLinearColor(0.946289f, 0.984314f, 0.626183f, 1.0f));
+				//ColorBrush->DrawAs = ESlateBrushDrawType::RoundedBox;
+				//OutlineSettings.CornerRadii = FVector4{ 5.f ,5.f ,5.f ,5.f };
+				//OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+				//ColorBrush->OutlineSettings = OutlineSettings;
+
+				//ScrollBoxBorder->SetBorderImage(ColorBrush);
+				//ScrollBoxBorder->SetPadding(FMargin(1, 1, 1, 1));
+
+				//ScrollBoxBorder->SetContent(ThumbnailImage.ToSharedRef());
+				//TSharedPtr<SVerticalBox> ScrollBoxVerticalBox = SNew(SVerticalBox);
+
+				//ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).Padding(5)
+				//	[
+				//		ScrollBoxBorder.ToSharedRef()
+				//	];
+				///*ScrollBoxVerticalBox->AddSlot().HAlign(HAlign_Center).AutoHeight()
+				//	[
+				//		Name.ToSharedRef()
+				//	];*/
+				//ScrollBox->AddSlot()
+				//	[
+				//		ScrollBoxVerticalBox.ToSharedRef()
+				//	];
 
 			}
 		}

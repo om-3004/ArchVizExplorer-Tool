@@ -28,6 +28,8 @@ void AFloorGenerator::Tick(float DeltaTime)
 
 void AFloorGenerator::GenerateFloor(const FVector& Dimensions)
 {
+	FloorMeasurements = Dimensions;
+	
 	TArray<FVector> Vertices;
 	TArray<FVector> Normals;
 	TArray<FVector2D> UVs;
@@ -104,5 +106,19 @@ void AFloorGenerator::GenerateFloor(const FVector& Dimensions)
 
 	FloorProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
 	if(FloorProceduralMeshMaterial) {FloorProceduralMeshComponent->SetMaterial(0, FloorProceduralMeshMaterial);}
+}
+
+void AFloorGenerator::ApplyMaterialToFloorActor(UMaterialInterface* Material)
+{
+	FloorMaterial = Material;
+
+	UMaterialInstanceDynamic* DynamicFloorMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	if (DynamicFloorMaterial) {
+		float TileX = (FloorMeasurements.X) / 200.0f;
+		float TileY = (FloorMeasurements.Y) / 200.0f;
+		DynamicFloorMaterial->SetScalarParameterValue("TileX", TileX);
+		DynamicFloorMaterial->SetScalarParameterValue("TileY", TileY);
+		FloorProceduralMeshComponent->SetMaterial(0, DynamicFloorMaterial);
+	}
 }
 
