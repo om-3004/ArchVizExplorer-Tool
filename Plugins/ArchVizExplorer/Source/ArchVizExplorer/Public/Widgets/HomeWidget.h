@@ -6,8 +6,8 @@
 #include "Blueprint/UserWidget.h"
 
 #include "Components/ComboBoxString.h"
-#include "Components/Button.h"
-#include "Components/EditableText.h"
+#include "Animation/WidgetAnimation.h"
+#include "Components/TextBlock.h"
 
 #include "HomeWidget.generated.h"
 
@@ -20,19 +20,10 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UComboBoxString* ModeSelectionDropdown;
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* SaveTemplateBtn;
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* DisplayMsgAnim;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* LoadTemplateBtn;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* SaveBtn;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* CloseBtn;
-
-	UPROPERTY(meta = (BindWidget))
-	UEditableText* SlotNameTxt;
+	UTextBlock* DisplayMsgTxt;
 
 };

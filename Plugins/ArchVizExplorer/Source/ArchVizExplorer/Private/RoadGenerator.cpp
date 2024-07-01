@@ -143,7 +143,10 @@ void ARoadGenerator::GenerateRoad(const FVector& Dimensions)
 	}
 
 	RoadProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	if(RoadMaterial) { RoadProceduralMeshComponent->SetMaterial(0, RoadMaterial);}
+	if(RoadProceduralMeshMaterial) { 
+		RoadMaterial = RoadProceduralMeshMaterial;
+		RoadProceduralMeshComponent->SetMaterial(0, RoadMaterial);
+	}
 }
 
 void ARoadGenerator::ApplyMaterialToRoadActor(UMaterialInterface* Material) {

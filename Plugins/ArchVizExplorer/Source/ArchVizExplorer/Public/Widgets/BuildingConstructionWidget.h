@@ -95,10 +95,4 @@ public:
 	USpinBox* RoofDimensionZ;
 	UPROPERTY(meta = (BindWidget))
 	UButton* DestroyRoofBtn;
-
-	// Roof Animation
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* RoofErrorMsgTxt;
-	UPROPERTY(Transient, meta = (BindWidgetAnim))
-	UWidgetAnimation* RoofErrorMsgAnim;
 };

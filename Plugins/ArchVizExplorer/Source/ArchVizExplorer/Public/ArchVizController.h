@@ -23,6 +23,8 @@
 #include "Widgets/BuildingConstructionWidget.h"
 #include "Widgets/MaterialSelectionWidget.h"
 #include "Widgets/InteriorDesignWidget.h"
+#include "Widgets/SaveLoadWidget.h"
+#include "Widgets/SlotListWidget.h"
 
 #include "ArchVizExplorerSaveGame.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,6 +38,7 @@ enum class EModeSelected : uint8 {
 	BuildingConstruction,
 	InteriorDesign,
 	MaterialSelection,
+	SaveLoadMode,
 };
 
 UENUM(BlueprintType)
@@ -366,12 +369,41 @@ private:
 	void PreviewInteriorOnRoof();
 
 	// Save / Load
+	UPROPERTY()
+	USaveLoadWidget* SaveLoadWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<USaveLoadWidget> SaveLoadWidgetClassRef;
+
+	UPROPERTY()
+	USlotListWidget* SlotListWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<USlotListWidget> SlotListWidgetClassRef;
+
 	UFUNCTION()
-	void ShowSaveBtn();
+	void ShowSaveMenu();
 	UFUNCTION()
-	void HideSaveBtn();
+	void ShowLoadMenu();
+	UFUNCTION()
+	void HideSaveMenu();
+	UFUNCTION()
+	void HideLoadMenu();
+	UFUNCTION()
+	bool CheckFileExists(const FString& FileName);
 	UFUNCTION()
 	void SaveTemplate();
 	UFUNCTION()
-	void LoadTemplate();
+	void LoadSlotWithGivenName(const FText& SlotName);
+	//void LoadTemplate();
+	UFUNCTION()
+	void ClearViewportBeforeLoad();
+	UFUNCTION()
+	void LoadSlotList();
+	UFUNCTION()
+	TArray<FString> FindFiles(FString FilePath, FString FileExtension);
+	UFUNCTION()
+	void DeleteSlotWithGivenName(const FText& SlotName);
+	UFUNCTION()
+	void ReplaceSlot();
+	UFUNCTION()
+	void RewriteSlotName();
 };
