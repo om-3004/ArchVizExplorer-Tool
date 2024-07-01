@@ -105,7 +105,10 @@ void AFloorGenerator::GenerateFloor(const FVector& Dimensions)
 	}
 
 	FloorProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	if(FloorProceduralMeshMaterial) {FloorProceduralMeshComponent->SetMaterial(0, FloorProceduralMeshMaterial);}
+	if(FloorProceduralMeshMaterial) {
+		FloorProceduralMeshComponent->SetMaterial(0, FloorProceduralMeshMaterial);
+		FloorMaterial = FloorProceduralMeshMaterial;
+	}
 }
 
 void AFloorGenerator::ApplyMaterialToFloorActor(UMaterialInterface* Material)

@@ -105,7 +105,10 @@ void ARoofGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	}
 
 	RoofProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	if(RoofProceduralMeshMaterial) {RoofProceduralMeshComponent->SetMaterial(0, RoofProceduralMeshMaterial);}
+	if(RoofProceduralMeshMaterial) {
+		RoofProceduralMeshComponent->SetMaterial(0, RoofProceduralMeshMaterial);
+		RoofMaterial = RoofProceduralMeshMaterial;
+	}
 }
 
 void ARoofGenerator::ApplyMaterialToRoofActor(UMaterialInterface* Material)

@@ -159,6 +159,8 @@ private:
 	bool bIsInBuildingEditorMode;
 	UPROPERTY()
 	bool bShouldEditWallLocationUnderCursor;
+	UPROPERTY()
+	UStaticMeshComponent* DoorHighlightComponent;
 	// Function - Building
 	UFUNCTION()
 	void UpdateBuildingMappings();
@@ -212,6 +214,8 @@ private:
 	void EditFloor();
 	UFUNCTION()
 	void EditRoof();
+	UFUNCTION()
+	void RemovePostProcessMaterial();
 	// Widget Bind Function - Wall
 	UFUNCTION()
 	void OnSegmentsChanged(float InValue);
@@ -393,7 +397,6 @@ private:
 	void SaveTemplate();
 	UFUNCTION()
 	void LoadSlotWithGivenName(const FText& SlotName);
-	//void LoadTemplate();
 	UFUNCTION()
 	void ClearViewportBeforeLoad();
 	UFUNCTION()
