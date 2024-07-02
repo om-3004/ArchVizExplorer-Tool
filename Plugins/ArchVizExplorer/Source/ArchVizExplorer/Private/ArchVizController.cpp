@@ -2038,7 +2038,7 @@ void AArchVizController::SaveTemplate() {
 				{
 					FWallSaveData WallData;
 					WallData.WallTransform = WallActor->GetActorTransform();
-					//WallData.WallStaticMesh = WallActor->WallStaticMesh;
+					WallData.WallStaticMesh = WallActor->WallStaticMesh;
 					WallData.WallMaterial = WallActor->WallMaterial;
 					WallData.NoOfSegments = WallActor->SegmentsNo;
 					WallData.WallActorMap = WallActor->WallActorMap;
@@ -2125,7 +2125,7 @@ void AArchVizController::LoadSlotWithGivenName(const FText& SlotName) {
 		for (const FWallSaveData& WallData : LoadGameInstance->WallActorArray)
 		{
 			AWallGenerator* WallActor = GetWorld()->SpawnActor<AWallGenerator>(WallGeneratorActorRef, WallData.WallTransform);
-			//WallActor->WallStaticMesh = WallData.WallStaticMesh;
+			WallActor->WallStaticMesh = WallData.WallStaticMesh;
 			WallActor->WallActorMap = WallData.WallActorMap;
 			WallActor->GenerateWall(WallData.NoOfSegments);
 			WallActor->ApplyMaterialToWallActor(WallData.WallMaterial);
