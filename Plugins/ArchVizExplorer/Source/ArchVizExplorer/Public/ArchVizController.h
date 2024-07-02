@@ -122,6 +122,8 @@ private:
 	UPROPERTY()
 	bool getLocation;
 	UPROPERTY()
+	bool bIsInRoadEditor;
+	UPROPERTY()
 	FHitResult HitResult;
 	UPROPERTY()
 	FVector StartLocation;

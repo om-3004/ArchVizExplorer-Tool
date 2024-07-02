@@ -3,7 +3,7 @@
 
 #include "ArchVizController.h"
 
-AArchVizController::AArchVizController() : getLocation{ true }, isFirstClick{ true }, bIsInBuildingEditorMode{ false }, bShouldEditWallLocationUnderCursor{ false }, bShouldEditFloorLocationUnderCursor{ false }
+AArchVizController::AArchVizController() : getLocation{ true }, isFirstClick{ true }, bIsInRoadEditor{ false }, bIsInBuildingEditorMode{ false }, bShouldEditWallLocationUnderCursor{ false }, bShouldEditFloorLocationUnderCursor{ false }
 {
 
 }
@@ -453,6 +453,7 @@ void AArchVizController::SetDefaultMode() {
 	case EModeSelected::RoadConstruction:
 		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Editor Mode"));
 		CurrentRoadMode = ERodeMode::ConstructionMode;
+		bIsInRoadEditor = false;
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
@@ -641,14 +642,19 @@ void AArchVizController::SetupRoadConstructionInputs()
 		UInputAction* ClickforRoadConstruction = NewObject<UInputAction>(this);
 		ClickforRoadConstruction->ValueType = EInputActionValueType::Boolean;
 		RoadConstructionIMC->MapKey(ClickforRoadConstruction, EKeys::LeftMouseButton);
+		
+		UInputAction* DestroyRoadAction = NewObject<UInputAction>(this);
+		DestroyRoadAction->ValueType = EInputActionValueType::Boolean;
+		RoadConstructionIMC->MapKey(DestroyRoadAction, EKeys::Delete);
 
 		EnhancedInputComponent->BindAction(ClickforRoadConstruction, ETriggerEvent::Completed, this, &AArchVizController::GetRoadLocationOnClick);
+		EnhancedInputComponent->BindAction(DestroyRoadAction, ETriggerEvent::Completed, this, &AArchVizController::OnDestroyRoadBtnClicked);
 	}
 }
 void AArchVizController::GetRoadLocationOnClick()
 {
 	if (CurrentRoadMode == ERodeMode::ConstructionMode) {
-
+		bIsInRoadEditor = false;
 		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true);
 
 		FVector CursorWorldLocation;
@@ -710,6 +716,7 @@ void AArchVizController::GetRoadLocationOnClick()
 		}
 	}
 	else {
+		bIsInRoadEditor = true;
 		if (RoadGeneratorActor) { RoadGeneratorActor->RoadProceduralMeshComponent->SetRenderCustomDepth(false); }
 		GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
 		if (Cast<ARoadGenerator>(HitResult.GetActor()))
@@ -804,9 +811,15 @@ void AArchVizController::OnRoadModeToggleBtnClicked()
 	}
 }
 void AArchVizController::OnDestroyRoadBtnClicked(){
-	if (RoadGeneratorActor) {
+	if (RoadGeneratorActor && bIsInRoadEditor) {
 		RoadGeneratorActor->Destroy();
 		RoadGeneratorActor = nullptr;
+
+		isFirstClick = true;
+		getLocation = true;
+
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Selected Road destroyed. you have to press LMB 2 times to generate another road."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 	}
 }
 
