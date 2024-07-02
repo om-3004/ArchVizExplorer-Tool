@@ -41,9 +41,6 @@ public:
 	USpinBox* LocationY;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* RoadConstructionMsg;
-
-	UPROPERTY(meta = (BindWidget))
 	UButton* NewRoadBtn;
 
 	UPROPERTY(meta = (BindWidget))

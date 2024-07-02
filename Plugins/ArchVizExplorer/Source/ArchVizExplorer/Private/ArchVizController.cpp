@@ -456,8 +456,10 @@ void AArchVizController::SetDefaultMode() {
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button at desired location to generate Road."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 		break;
 	case EModeSelected::BuildingConstruction:
 		CurrentBuildingComponent = EBuildingComponent::None;
@@ -493,15 +495,24 @@ void AArchVizController::SetDefaultMode() {
 		BuildingConstructionWidget->RoofLocationBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->RoofDimensionsBox->SetVisibility(ESlateVisibility::Hidden);
 		BuildingConstructionWidget->DestroyRoofBtn->SetVisibility(ESlateVisibility::Hidden);
+
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Select the Building Component you want to generate by Generator Button."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 		break;
 	case EModeSelected::MaterialSelection:
 		MaterialSelectionWidget->RoadMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
 		MaterialSelectionWidget->BuildingMaterialScrollBox->SetVisibility(ESlateVisibility::Hidden);
+
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Select the Asset and choose Material to apply."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 		break;
 	case EModeSelected::InteriorDesign:
 		InteriorDesignWidget->WallInteriorScrollBox->SetVisibility(ESlateVisibility::Visible);
 		InteriorDesignWidget->FloorInteriorScrollBox->SetVisibility(ESlateVisibility::Visible);
 		InteriorDesignWidget->RoofInteriorScrollBox->SetVisibility(ESlateVisibility::Visible);
+
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Choose the Interior and press Left Mouse Button to place it."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 		break;
 	case EModeSelected::SaveLoadMode:
 		SaveLoadWidget->SaveTemplateBtn->SetVisibility(ESlateVisibility::Visible);
@@ -777,8 +788,8 @@ void AArchVizController::OnRoadModeToggleBtnClicked()
 		RoadConstructionWidget->ModeToggleBtnText->SetText(FText::FromString("Switch to Construction Mode"));
 		CurrentRoadMode = ERodeMode::EditorMode;
 
-		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Visible);
-		RoadConstructionWidget->RoadConstructionMsg->SetText(FText::FromString("Select the Road which you want to Edit."));
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Select the Road which you want to Edit."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 	}
 	else {
@@ -788,7 +799,6 @@ void AArchVizController::OnRoadModeToggleBtnClicked()
 
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
-		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -863,6 +873,11 @@ void AArchVizController::SelectBuildingComponentOnClick() {
 			EditRoof();
 		}
 		else { // No Asset Selected
+			RoadGeneratorActor = nullptr;
+			WallGeneratorActor = nullptr;
+			FloorGeneratorActor = nullptr;
+			RoofGeneratorActor = nullptr;
+
 			// Wall Editor Widgets
 			BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 			BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
@@ -1058,6 +1073,8 @@ void AArchVizController::RemovePostProcessMaterial() {
 
 // Building Widget Bind Function
 void AArchVizController::OnWallBtnClicked() {
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to place Wall at your desired location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Visible);
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Visible);
@@ -1085,6 +1102,9 @@ void AArchVizController::OnWallBtnClicked() {
 	}
 }
 void AArchVizController::OnDoorBtnClicked() {
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to place Door at your desired Wall location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+
 	DestroyDoorPreviewActor();
 
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
@@ -1097,6 +1117,9 @@ void AArchVizController::OnDoorBtnClicked() {
 
 }
 void AArchVizController::OnFloorBtnClicked() {
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press and Hold Left Mouse Button to generate Floor at your desired location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+
 	DestroyDoorPreviewActor();
 
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
@@ -1109,6 +1132,9 @@ void AArchVizController::OnFloorBtnClicked() {
 
 }
 void AArchVizController::OnRoofBtnClicked() {
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press and Hold LMB to generate Roof at your desired location or press MMB between 4 walls."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+
 	DestroyDoorPreviewActor();
 
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
@@ -1129,6 +1155,9 @@ void AArchVizController::OnBuildingModeToggleBtnClicked()
 		bIsInBuildingEditorMode = true;
 		
 		CurrentBuildingMode = EBuildingMode::EditorMode;
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to select the Building Component you want to edit."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+
 		BuildingConstructionWidget->BuildingModeToggleBtnText->SetText(FText::FromString("Switch to Construction Mode"));
 
 		BuildingConstructionWidget->WallBtn->SetVisibility(ESlateVisibility::Hidden);
@@ -1224,7 +1253,7 @@ void AArchVizController::BuildWallAtClick()
 }
 void AArchVizController::RotateWall()
 {
-	if(WallGeneratorActor) {WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));}
+	if(IsValid(WallGeneratorActor)) {WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));}
 }
 void AArchVizController::DestroyWallGeneratorActor() {
 	if (WallGeneratorActor) {
@@ -1290,6 +1319,8 @@ void AArchVizController::OnDestroyWallBtnClicked() {
 	}
 }
 void AArchVizController::OnUpdateWallLocationUnderCursorBtnClicked() {
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to Place the Wall at desired location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 	if(WallGeneratorActor) {
 		bShouldEditWallLocationUnderCursor = true;
 	}
@@ -1366,6 +1397,10 @@ void AArchVizController::GenerateDoorOnClick() {
 			}
 		}
 	}
+	else {
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Door can only be placed on a Wall."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+	}
 }
 void AArchVizController::DestroyDoorPreviewActor() {
 	if (DoorStaticMeshActor) {
@@ -1404,8 +1439,10 @@ void AArchVizController::OnDestroyDoorBtnClicked() {
 
 			BuildingConstructionWidget->DoorScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
 			BuildingConstructionWidget->DestroyDoorBtn->SetVisibility(ESlateVisibility::Hidden);
+			RemovePostProcessMaterial();
 		}
 	}
+	WallGeneratorActor = nullptr;
 }
 
 // Floor Construction
@@ -1509,6 +1546,8 @@ void AArchVizController::OnDestroyFloorBtnClicked(){
 	}
 }
 void AArchVizController::OnUpdateFloorLocationUnderCursorBtnClicked(){
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to Place the Floor at desired location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 	if (FloorGeneratorActor) {
 		bShouldEditFloorLocationUnderCursor = true;
 	}
@@ -1685,6 +1724,8 @@ void AArchVizController::OnRoofDimensionZValueChanged(float InValue){
 	}
 }
 void AArchVizController::OnDestroyRoofBtnClicked(){
+	HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Press Left Mouse Button to Place the Roof at desired location."));
+	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 	if (RoofGeneratorActor) {
 		RoofGeneratorActor->Destroy();
 		RoofGeneratorActor = nullptr;
@@ -1798,8 +1839,13 @@ void AArchVizController::SetupInteriorDesignInputs()
 		RotateAction->ValueType = EInputActionValueType::Boolean;
 		InteriorDesignIMC->MapKey(RotateAction, EKeys::R);
 
+		UInputAction* DestroyAction = NewObject<UInputAction>(this);
+		DestroyAction->ValueType = EInputActionValueType::Boolean;
+		InteriorDesignIMC->MapKey(DestroyAction, EKeys::Delete);
+
 		EnhancedInputComponent->BindAction(ClickToPlaceInterior, ETriggerEvent::Completed, this, &AArchVizController::PlaceInteriorOnClick);
 		EnhancedInputComponent->BindAction(RotateAction, ETriggerEvent::Completed, this, &AArchVizController::RotateInterior);
+		EnhancedInputComponent->BindAction(DestroyAction, ETriggerEvent::Completed, this, &AArchVizController::DestroyInterior);
 	}
 }
 void AArchVizController::PlaceInteriorOnClick() {
@@ -1828,6 +1874,10 @@ void AArchVizController::PlaceInteriorOnClick() {
 				InteriorStaticMesh = nullptr;
 				InteriorDesignActor = nullptr;
 			}
+			else {
+				HomeWidget->DisplayMsgTxt->SetText(FText::FromString("The selected Interior can only be placed on Wall."));
+				HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+			}
 		}
 		else if (BuildingAssetSelectedController == EBuildingAsset::Floor) {
 			if (Cast<AFloorGenerator>(HitResult.GetActor())) {
@@ -1840,7 +1890,10 @@ void AArchVizController::PlaceInteriorOnClick() {
 
 				InteriorStaticMesh = nullptr;
 				InteriorDesignActor = nullptr;
-
+			}
+			else {
+				HomeWidget->DisplayMsgTxt->SetText(FText::FromString("The selected Interior can only be placed on Floor."));
+				HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 			}
 		}
 		else if (BuildingAssetSelectedController == EBuildingAsset::Roof) {
@@ -1854,7 +1907,10 @@ void AArchVizController::PlaceInteriorOnClick() {
 
 				InteriorStaticMesh = nullptr;
 				InteriorDesignActor = nullptr;
-
+			}
+			else {
+				HomeWidget->DisplayMsgTxt->SetText(FText::FromString("The selected Interior can only be placed on Roof."));
+				HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 			}
 		}
 	}
@@ -1888,6 +1944,13 @@ void AArchVizController::SetInterior(const FInteriorDesignData& InteriorDesignDa
 }
 void AArchVizController::DestroyInteriorPreviewActor() {
 	if (InteriorDesignActor) {
+		InteriorDesignActor->Destroy();
+		InteriorDesignActor = nullptr;
+	}
+}
+void AArchVizController::DestroyInterior() {
+	if (InteriorDesignActor) {
+		InteriorStaticMesh = nullptr;
 		InteriorDesignActor->Destroy();
 		InteriorDesignActor = nullptr;
 	}

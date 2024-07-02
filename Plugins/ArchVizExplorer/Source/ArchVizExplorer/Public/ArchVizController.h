@@ -370,6 +370,8 @@ private:
 	UFUNCTION()
 	void DestroyInteriorPreviewActor();
 	UFUNCTION()
+	void DestroyInterior();
+	UFUNCTION()
 	void PreviewInteriorOnWall();
 	UFUNCTION()
 	void PreviewInteriorOnFloor();
