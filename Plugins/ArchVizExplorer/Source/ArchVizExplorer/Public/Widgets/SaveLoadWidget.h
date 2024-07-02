@@ -58,4 +58,18 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* AlreadyExistsMsgTxt;
 
+	UPROPERTY(meta = (BindWidget))
+	UBorder* RenameMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CloseRenameMenuBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableText* NewSlotNameTxt;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* RenameBtn;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* RenamingSlotMsgTxt;
 };

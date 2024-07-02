@@ -32,6 +32,9 @@ struct FWallSaveData {
 	FTransform WallTransform;
 
 	UPROPERTY()
+	UStaticMesh* WallStaticMesh;
+
+	UPROPERTY()
 	UMaterialInterface* WallMaterial;
 
 	UPROPERTY()

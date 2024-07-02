@@ -12,6 +12,7 @@
 
 DECLARE_DELEGATE_OneParam(FOnTemplateSlotPressed, const FText&)
 DECLARE_DELEGATE_OneParam(FOnDeleteTemplateSlotPressed, const FText&)
+DECLARE_DELEGATE_OneParam(FOnEditTemplateSlotNamePressed, const FText&)
 
 UCLASS()
 class ARCHVIZEXPLORER_API USlotListWidget : public UUserWidget
@@ -28,8 +29,12 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UButton* DeleteSelectedSlotBtn;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* EditSelectedSlotNameBtn;
+
 	FOnTemplateSlotPressed OnTemplateSlotPressed;
 	FOnDeleteTemplateSlotPressed OnDeleteTemplateSlotPressed;
+	FOnEditTemplateSlotNamePressed OnEditTemplateSlotNamePressed;
 
 protected:
 	virtual void NativeConstruct() override;
@@ -40,4 +45,7 @@ private:
 
 	UFUNCTION()
 	void AfterSlotDeleteBtnPressed();
+
+	UFUNCTION()
+	void AfterSlotNameEditBtnPressed();
 };

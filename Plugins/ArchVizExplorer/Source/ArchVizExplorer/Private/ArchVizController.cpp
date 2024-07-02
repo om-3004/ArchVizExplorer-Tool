@@ -323,6 +323,8 @@ void AArchVizController::BindWidgetDelegates() {
 		SaveLoadWidget->SaveBtn->OnClicked.AddDynamic(this, &AArchVizController::SaveTemplate);
 		SaveLoadWidget->ReplaceBtn->OnClicked.AddDynamic(this, &AArchVizController::ReplaceSlot);
 		SaveLoadWidget->CancelBtn->OnClicked.AddDynamic(this, &AArchVizController::RewriteSlotName);
+		SaveLoadWidget->CloseRenameMenuBtn->OnClicked.AddDynamic(this, &AArchVizController::HideRenameMenu);
+		SaveLoadWidget->RenameBtn->OnClicked.AddDynamic(this, &AArchVizController::RenameSlot);
 	}
 }
 void AArchVizController::BeginPlay() {
@@ -1992,7 +1994,6 @@ bool AArchVizController::CheckFileExists(const FString& FileName) {
 	IFileManager& FileManager = IFileManager::Get();
 
 	FString FilePath = FPaths::ProjectSavedDir() + "SaveGames/" + FileName + ".sav";
-
 	return FileManager.FileExists(*FilePath);
 }
 void AArchVizController::SaveTemplate() {
@@ -2002,6 +2003,7 @@ void AArchVizController::SaveTemplate() {
 	{
 		if (CheckFileExists(SlotText.ToString())) {
 			SaveLoadWidget->ConfirmationBox->SetVisibility(ESlateVisibility::Visible);
+			SaveLoadWidget->CloseSaveMenuBtn->SetVisibility(ESlateVisibility::HitTestInvisible);
 			SaveLoadWidget->AlreadyExistsMsgTxt->SetText(FText::FromString("Slot named \"" + SlotText.ToString() + "\" is already present."));
 		}
 		else {
@@ -2036,10 +2038,11 @@ void AArchVizController::SaveTemplate() {
 				{
 					FWallSaveData WallData;
 					WallData.WallTransform = WallActor->GetActorTransform();
+					//WallData.WallStaticMesh = WallActor->WallStaticMesh;
 					WallData.WallMaterial = WallActor->WallMaterial;
 					WallData.NoOfSegments = WallActor->SegmentsNo;
 					WallData.WallActorMap = WallActor->WallActorMap;
-
+					
 					SaveArchVizInstance->WallActorArray.Add(WallData);
 				}
 			}
@@ -2122,6 +2125,7 @@ void AArchVizController::LoadSlotWithGivenName(const FText& SlotName) {
 		for (const FWallSaveData& WallData : LoadGameInstance->WallActorArray)
 		{
 			AWallGenerator* WallActor = GetWorld()->SpawnActor<AWallGenerator>(WallGeneratorActorRef, WallData.WallTransform);
+			//WallActor->WallStaticMesh = WallData.WallStaticMesh;
 			WallActor->WallActorMap = WallData.WallActorMap;
 			WallActor->GenerateWall(WallData.NoOfSegments);
 			WallActor->ApplyMaterialToWallActor(WallData.WallMaterial);
@@ -2201,6 +2205,7 @@ void AArchVizController::LoadSlotList(){
 			if (SlotListWidget) {
 				SlotListWidget->OnTemplateSlotPressed.BindUFunction(this, "LoadSlotWithGivenName");
 				SlotListWidget->OnDeleteTemplateSlotPressed.BindUFunction(this, "DeleteSlotWithGivenName");
+				SlotListWidget->OnEditTemplateSlotNamePressed.BindUFunction(this, "ShowRenameMenu");
 				SlotListWidget->LoadSlotName->SetText(FText::FromString(SlotFiles[i].LeftChop(4)));
 				SaveLoadWidget->SlotListScrollBox->AddChild(SlotListWidget);
 			}
@@ -2323,4 +2328,49 @@ void AArchVizController::RewriteSlotName() {
 	SaveLoadWidget->ConfirmationBox->SetVisibility(ESlateVisibility::Hidden);
 	SaveLoadWidget->SlotNameTxt->SetText(FText::FromString(""));
 	SaveLoadWidget->CloseSaveMenuBtn->SetVisibility(ESlateVisibility::Visible);
+}
+void AArchVizController::ShowRenameMenu(const FText& FileName) {
+	SaveLoadWidget->RenameMenu->SetVisibility(ESlateVisibility::Visible);
+	SaveLoadWidget->NewSlotNameTxt->SetText(FText::FromString(""));
+	SelectedSlotName = FileName.ToString();
+
+	SaveLoadWidget->RenamingSlotMsgTxt->SetText(FText::FromString("Renaming \"" + SelectedSlotName + "\" Slot."));
+}
+void AArchVizController::HideRenameMenu() {
+	SaveLoadWidget->RenameMenu->SetVisibility(ESlateVisibility::Hidden);
+}
+void AArchVizController::RenameSlot() {
+	IFileManager& FileManager = IFileManager::Get();
+	FString SelectedSlotFilePath = FPaths::ProjectSavedDir() + "SaveGames/" + SelectedSlotName + ".sav";
+	if (SaveLoadWidget->NewSlotNameTxt->GetText().IsEmpty()) {
+		HomeWidget->DisplayMsgTxt->SetText(FText::FromString("The Slot Name cannot be empty."));
+		HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+	}
+	else
+	{
+		if (FileManager.FileExists(*SelectedSlotFilePath)) {
+
+			FString NewSlotName = SaveLoadWidget->NewSlotNameTxt->GetText().ToString();
+			if (SelectedSlotName == NewSlotName) {
+				HomeWidget->DisplayMsgTxt->SetText(FText::FromString("This Slot's name is already \"" + SelectedSlotName + "\"."));
+				HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+				SaveLoadWidget->NewSlotNameTxt->SetText(FText::FromString(""));
+			}
+			else {
+
+				FString NewSlotFilePath = FPaths::ProjectSavedDir() + "SaveGames/" + NewSlotName + ".sav";
+				FileManager.Move(*NewSlotFilePath, *SelectedSlotFilePath, true);
+
+				HomeWidget->DisplayMsgTxt->SetText(FText::FromString("Slot \"" + SelectedSlotName + "\" is renamed to \"" + NewSlotName + "\"."));
+				HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+
+				SaveLoadWidget->LoadMenu->SetVisibility(ESlateVisibility::Hidden);
+				SaveLoadWidget->RenameMenu->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
+		else {
+			HomeWidget->DisplayMsgTxt->SetText(FText::FromString("No Slot with \"" + SelectedSlotName + "\" exists."));
+			HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
+		}
+	}
 }

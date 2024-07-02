@@ -391,6 +391,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
 	TSubclassOf<USlotListWidget> SlotListWidgetClassRef;
 
+	UPROPERTY()
+	FString SelectedSlotName;
+
 	UFUNCTION()
 	void ShowSaveMenu();
 	UFUNCTION()
@@ -417,4 +420,10 @@ private:
 	void ReplaceSlot();
 	UFUNCTION()
 	void RewriteSlotName();
+	UFUNCTION()
+	void ShowRenameMenu(const FText& FileName);
+	UFUNCTION()
+	void HideRenameMenu();
+	UFUNCTION()
+	void RenameSlot();
 };

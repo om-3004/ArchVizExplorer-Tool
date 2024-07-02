@@ -9,6 +9,7 @@ void USlotListWidget::NativeConstruct()
 
 	LoadSelectedSlotBtn->OnClicked.AddDynamic(this, &USlotListWidget::AfterSlotSelected);
 	DeleteSelectedSlotBtn->OnClicked.AddDynamic(this, &USlotListWidget::AfterSlotDeleteBtnPressed);
+	EditSelectedSlotNameBtn->OnClicked.AddDynamic(this, &USlotListWidget::AfterSlotNameEditBtnPressed);
 }
 
 void USlotListWidget::AfterSlotSelected()
@@ -19,4 +20,9 @@ void USlotListWidget::AfterSlotSelected()
 void USlotListWidget::AfterSlotDeleteBtnPressed()
 {
 	OnDeleteTemplateSlotPressed.ExecuteIfBound(LoadSlotName->GetText());
+}
+
+void USlotListWidget::AfterSlotNameEditBtnPressed()
+{
+	OnEditTemplateSlotNamePressed.ExecuteIfBound(LoadSlotName->GetText());
 }
