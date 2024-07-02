@@ -99,7 +99,7 @@ void AArchVizController::PreviewInteriorOnWall() {
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, CursorWorldLocation, CursorWorldLocation + CursorWorldDirection * 10000, ECC_Visibility, TraceParams)) {
 		if (Cast<AWallGenerator>(HitResult.GetActor())) {
 			AWallGenerator* TempWallActor = Cast<AWallGenerator>(HitResult.GetActor());
-			if (InteriorStaticMesh) {
+			if (IsValid(InteriorStaticMesh)) {
 				if (InteriorDesignActor) {
 					InteriorDesignActor->SetActorRotation(FRotator(0, 0, 0));
 					FVector WallDirection = TempWallActor->GetActorForwardVector(); // 1,0,0
@@ -131,6 +131,9 @@ void AArchVizController::PreviewInteriorOnWall() {
 					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 					InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), HitResult.Location, TempWallActor->GetActorRotation(), SpawnParams);
 					InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+					InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(true);
+					InteriorDesignActor->InteriorStaticMeshComponent->CustomDepthStencilValue = 2.0;
 				}
 			}
 		}
@@ -156,6 +159,9 @@ void AArchVizController::PreviewInteriorOnFloor() {
 						SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 						InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), HitResult.Location, FRotator::ZeroRotator, SpawnParams);
 						InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+						InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(true);
+						InteriorDesignActor->InteriorStaticMeshComponent->CustomDepthStencilValue = 2.0;
 					}
 			}
 			else {
@@ -185,6 +191,9 @@ void AArchVizController::PreviewInteriorOnRoof(){
 						SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 						InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), HitResult.Location, FRotator::ZeroRotator, SpawnParams);
 						InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+						InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(true);
+						InteriorDesignActor->InteriorStaticMeshComponent->CustomDepthStencilValue = 2.0;
 					}
 				}
 				else {
@@ -257,6 +266,7 @@ void AArchVizController::BindWidgetDelegates() {
 		RoadConstructionWidget->LocationX->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoadLocationXValueChanged);
 		RoadConstructionWidget->LocationY->OnValueChanged.AddDynamic(this, &AArchVizController::OnRoadLocationYValueChanged);
 		RoadConstructionWidget->NewRoadBtn->OnClicked.AddDynamic(this, &AArchVizController::GenerateNewRoad);
+		RoadConstructionWidget->DestroyRoadBtn->OnClicked.AddDynamic(this, &AArchVizController::OnDestroyRoadBtnClicked);
 	}
 	if (BuildingConstructionWidget && BuildingConstructionWidgetClassRef) {
 		BuildingConstructionWidget->WallBtn->OnClicked.AddDynamic(this, &AArchVizController::OnWallBtnClicked);
@@ -264,6 +274,7 @@ void AArchVizController::BindWidgetDelegates() {
 		BuildingConstructionWidget->FloorBtn->OnClicked.AddDynamic(this, &AArchVizController::OnFloorBtnClicked);
 		BuildingConstructionWidget->RoofBtn->OnClicked.AddDynamic(this, &AArchVizController::OnRoofBtnClicked);
 		BuildingConstructionWidget->BuildingModeToggleBtn->OnClicked.AddDynamic(this, &AArchVizController::OnBuildingModeToggleBtnClicked);
+		BuildingConstructionWidget->KeyMappingBtn->OnClicked.AddDynamic(this, &AArchVizController::ToggleKeyMappingMenu);
 
 		// Wall Generator
 		BuildingConstructionWidget->NoSegmentsValue->OnValueChanged.AddDynamic(this, &AArchVizController::OnSegmentsChanged);
@@ -446,6 +457,7 @@ void AArchVizController::SetDefaultMode() {
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 		break;
 	case EModeSelected::BuildingConstruction:
 		CurrentBuildingComponent = EBuildingComponent::None;
@@ -456,6 +468,9 @@ void AArchVizController::SetDefaultMode() {
 		BuildingConstructionWidget->DoorBtn->SetVisibility(ESlateVisibility::Visible);
 		BuildingConstructionWidget->FloorBtn->SetVisibility(ESlateVisibility::Visible);
 		BuildingConstructionWidget->RoofBtn->SetVisibility(ESlateVisibility::Visible);
+		BuildingConstructionWidget->KeyMappingBtn->SetVisibility(ESlateVisibility::Visible);
+		BuildingConstructionWidget->KeyMappingBtntxt->SetText(FText::FromString("Show Key Mapping"));
+		BuildingConstructionWidget->KeyMappingMenu->SetVisibility(ESlateVisibility::Hidden);
 
 		// Wall Editor Widgets
 		BuildingConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
@@ -595,6 +610,16 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		}
 	}
 }
+void AArchVizController::ToggleKeyMappingMenu() {
+	if (BuildingConstructionWidget->KeyMappingBtntxt->GetText().EqualTo(FText::FromString("Show Key Mapping"))) {
+		BuildingConstructionWidget->KeyMappingBtntxt->SetText(FText::FromString("Hide Key Mapping"));
+		BuildingConstructionWidget->KeyMappingMenu->SetVisibility(ESlateVisibility::Visible);
+	}
+	else {
+		BuildingConstructionWidget->KeyMappingBtntxt->SetText(FText::FromString("Show Key Mapping"));
+		BuildingConstructionWidget->KeyMappingMenu->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
 
 // Road Construction
 void AArchVizController::SetupRoadConstructionInputs()
@@ -680,6 +705,7 @@ void AArchVizController::GetRoadLocationOnClick()
 		{
 			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Visible);
 			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Visible);
+			RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Visible);
 			RoadGeneratorActor = Cast<ARoadGenerator>(HitResult.GetActor());
 			RoadConstructionWidget->WidthValue->SetValue(RoadGeneratorActor->GetActorScale3D().Y * RoadDimensions.Y);
 			RoadConstructionWidget->LocationX->SetValue(RoadGeneratorActor->GetActorLocation().X);
@@ -691,6 +717,7 @@ void AArchVizController::GetRoadLocationOnClick()
 		else {
 			RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 			RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
+			RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 }
@@ -762,7 +789,14 @@ void AArchVizController::OnRoadModeToggleBtnClicked()
 		RoadConstructionWidget->WidthBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->LocationBox->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->RoadConstructionMsg->SetVisibility(ESlateVisibility::Hidden);
+		RoadConstructionWidget->DestroyRoadBtn->SetVisibility(ESlateVisibility::Hidden);
 		RoadConstructionWidget->NewRoadBtn->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+void AArchVizController::OnDestroyRoadBtnClicked(){
+	if (RoadGeneratorActor) {
+		RoadGeneratorActor->Destroy();
+		RoadGeneratorActor = nullptr;
 	}
 }
 
@@ -774,9 +808,14 @@ void AArchVizController::SetupBuildingEditorInputs()
 
 		UInputAction* ClickforSelectingBuildingComponent = NewObject<UInputAction>(this);
 		ClickforSelectingBuildingComponent->ValueType = EInputActionValueType::Boolean;
-		BuildingEditorIMC->MapKey(ClickforSelectingBuildingComponent, EKeys::LeftMouseButton);
+		BuildingEditorIMC->MapKey(ClickforSelectingBuildingComponent, EKeys::LeftMouseButton); 
+		
+		UInputAction* RotateSelectedWallActor = NewObject<UInputAction>(this);
+		RotateSelectedWallActor->ValueType = EInputActionValueType::Boolean;
+		BuildingEditorIMC->MapKey(RotateSelectedWallActor, EKeys::R);
 
 		EnhancedInputComponent->BindAction(ClickforSelectingBuildingComponent, ETriggerEvent::Completed, this, &AArchVizController::SelectBuildingComponentOnClick);
+		EnhancedInputComponent->BindAction(RotateSelectedWallActor, ETriggerEvent::Completed, this, &AArchVizController::RotateWall);
 	}
 }
 void AArchVizController::SelectBuildingComponentOnClick() {
@@ -1009,6 +1048,9 @@ void AArchVizController::RemovePostProcessMaterial() {
 	if (RoofGeneratorActor) {
 		RoofGeneratorActor->RoofProceduralMeshComponent->SetRenderCustomDepth(false);
 	}
+	if (InteriorDesignActor) {
+		InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(false);
+	}
 }
 
 // Building Widget Bind Function
@@ -1179,7 +1221,7 @@ void AArchVizController::BuildWallAtClick()
 }
 void AArchVizController::RotateWall()
 {
-	WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));
+	if(WallGeneratorActor) {WallGeneratorActor->SetActorRelativeRotation(FRotator(0, WallGeneratorActor->GetActorRotation().Yaw + 90, 0));}
 }
 void AArchVizController::DestroyWallGeneratorActor() {
 	if (WallGeneratorActor) {
@@ -1755,52 +1797,75 @@ void AArchVizController::SetupInteriorDesignInputs()
 	}
 }
 void AArchVizController::PlaceInteriorOnClick() {
-	FVector InteriorSpawnLocation{};
-	FRotator InteriorSpawnRotation{};
-	if (InteriorDesignActor) {
-		InteriorSpawnLocation = InteriorDesignActor->GetActorLocation();
-		InteriorSpawnRotation = InteriorDesignActor->GetActorRotation();
+	if(IsValid(InteriorStaticMesh)) {
+		FVector InteriorSpawnLocation{};
+		FRotator InteriorSpawnRotation{};
+		if (InteriorDesignActor) {
+			InteriorSpawnLocation = InteriorDesignActor->GetActorLocation();
+			InteriorSpawnRotation = InteriorDesignActor->GetActorRotation();
 
-		InteriorDesignActor->Destroy();
-		InteriorDesignActor = nullptr;
-	}
-
-	GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
-
-	if(BuildingAssetSelectedController == EBuildingAsset::Wall) {
-		if (Cast<AWallGenerator>(HitResult.GetActor())) {
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-			InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
-			InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Wall;
-			InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+			InteriorDesignActor->Destroy();
 			InteriorDesignActor = nullptr;
+		}
 
+		GetHitResultUnderCursor(ECC_Visibility, true, HitResult);
+
+		if (BuildingAssetSelectedController == EBuildingAsset::Wall) {
+			if (Cast<AWallGenerator>(HitResult.GetActor())) {
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+				InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
+				InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Wall;
+				InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+				InteriorStaticMesh = nullptr;
+				InteriorDesignActor = nullptr;
+			}
+		}
+		else if (BuildingAssetSelectedController == EBuildingAsset::Floor) {
+			if (Cast<AFloorGenerator>(HitResult.GetActor())) {
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+				InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
+				InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Floor;
+				InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+				InteriorStaticMesh = nullptr;
+				InteriorDesignActor = nullptr;
+
+			}
+		}
+		else if (BuildingAssetSelectedController == EBuildingAsset::Roof) {
+			if (Cast<ARoofGenerator>(HitResult.GetActor())) {
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+				InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
+				InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Roof;
+				InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
+
+				InteriorStaticMesh = nullptr;
+				InteriorDesignActor = nullptr;
+
+			}
 		}
 	}
-	else if (BuildingAssetSelectedController == EBuildingAsset::Floor) {
-		if (Cast<AFloorGenerator>(HitResult.GetActor())) {
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	else {
+		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true);
+		FVector CursorWorldLocation;
+		FVector CursorWorldDirection;
 
-			InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
-			InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Floor;
-			InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
-			InteriorDesignActor = nullptr;
+		DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection);
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, CursorWorldLocation, CursorWorldLocation + CursorWorldDirection * 10000, ECC_Visibility, TraceParams)) {
+			if (Cast<AInteriorDesign>(HitResult.GetActor())) {
+				InteriorDesignActor = Cast<AInteriorDesign>(HitResult.GetActor());
+				InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(true);
+				InteriorDesignActor->InteriorStaticMeshComponent->CustomDepthStencilValue = 2.0;
 
-		}
-	}
-	else if (BuildingAssetSelectedController == EBuildingAsset::Roof) {
-		if (Cast<ARoofGenerator>(HitResult.GetActor())) {
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-			InteriorDesignActor = GetWorld()->SpawnActor<AInteriorDesign>(AInteriorDesign::StaticClass(), InteriorSpawnLocation, InteriorSpawnRotation, SpawnParams);
-			InteriorDesignActor->BuildingAssetForInterior = EBuildingAsset::Roof;
-			InteriorDesignActor->SetInteriorStaticMesh(InteriorStaticMesh);
-			InteriorDesignActor = nullptr;
-
+				InteriorStaticMesh = InteriorDesignActor->InteriorStaticMesh;
+			}
 		}
 	}
 }

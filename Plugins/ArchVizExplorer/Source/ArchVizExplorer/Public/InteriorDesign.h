@@ -24,6 +24,9 @@ public:
 	UPROPERTY()
 	EBuildingAsset BuildingAssetForInterior;
 
+	UPROPERTY()
+	UStaticMeshComponent* InteriorStaticMeshComponent;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -31,8 +34,5 @@ protected:
 private:
 	UPROPERTY()
 	USceneComponent* InteriorSceneComponent;
-
-	UPROPERTY()
-	UStaticMeshComponent* InteriorStaticMeshComponent;
 
 };

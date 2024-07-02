@@ -101,6 +101,8 @@ private:
 	// Widget Bind Function - Home
 	UFUNCTION()
 	void OnModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+	UFUNCTION()
+	void ToggleKeyMappingMenu();
 
 	// Road Construction
 	UPROPERTY()
@@ -137,6 +139,8 @@ private:
 	// Widget Bind Function - Road
 	UFUNCTION()
 	void OnRoadModeToggleBtnClicked();
+	UFUNCTION()
+	void OnDestroyRoadBtnClicked();
 	UFUNCTION()
 	void GenerateNewRoad();
 	UFUNCTION()

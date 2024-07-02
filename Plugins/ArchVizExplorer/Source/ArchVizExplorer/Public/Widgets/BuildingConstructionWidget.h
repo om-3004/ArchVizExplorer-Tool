@@ -10,6 +10,7 @@
 #include "Components/Button.h"
 #include "ScrollBoxWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/Border.h"
 
 #include "BuildingConstructionWidget.generated.h"
 
@@ -95,4 +96,11 @@ public:
 	USpinBox* RoofDimensionZ;
 	UPROPERTY(meta = (BindWidget))
 	UButton* DestroyRoofBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* KeyMappingBtn;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* KeyMappingBtntxt;
+	UPROPERTY(meta = (BindWidget))
+	UBorder* KeyMappingMenu;
 };

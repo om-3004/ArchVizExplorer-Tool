@@ -45,4 +45,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* NewRoadBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* DestroyRoadBtn;
 };
