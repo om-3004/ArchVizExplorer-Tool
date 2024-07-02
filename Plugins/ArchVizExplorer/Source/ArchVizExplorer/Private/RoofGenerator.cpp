@@ -31,6 +31,8 @@ void ARoofGenerator::GenerateRoof(const FVector& Dimensions)
 
 void ARoofGenerator::GenerateCube(const FVector& Dimensions, const FVector& LocationOffset)
 {
+	if(RoofProceduralMeshMaterial) {RoofMaterial = RoofProceduralMeshMaterial;}
+
 	TArray<FVector> Vertices;
 	TArray<FVector> Normals;
 	TArray<FVector2D> UVs;
@@ -105,15 +107,14 @@ void ARoofGenerator::GenerateCube(const FVector& Dimensions, const FVector& Loca
 	}
 
 	RoofProceduralMeshComponent->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UVs, Colors, Tangents, true);
-	if(RoofProceduralMeshMaterial) {
-		RoofProceduralMeshComponent->SetMaterial(0, RoofProceduralMeshMaterial);
-		RoofMaterial = RoofProceduralMeshMaterial;
-	}
+
+	ApplyMaterialToRoofActor(RoofMaterial);
 }
 
 void ARoofGenerator::ApplyMaterialToRoofActor(UMaterialInterface* Material)
 {
 	RoofMaterial = Material;
+	RoofProceduralMeshMaterial = Material;
 
 	UMaterialInstanceDynamic* DynamicRoofMaterial = UMaterialInstanceDynamic::Create(Material, this);
 	if (DynamicRoofMaterial) {

@@ -849,6 +849,7 @@ void AArchVizController::SelectBuildingComponentOnClick() {
 		}
 		else if (Cast<AFloorGenerator>(HitResult.GetActor())) {
 			FloorGeneratorActor = Cast<AFloorGenerator>(HitResult.GetActor());
+			FloorGeneratorActor->ApplyMaterialToFloorActor(FloorGeneratorActor->FloorMaterial);
 			FloorGeneratorActor->FloorProceduralMeshComponent->SetRenderCustomDepth(true);
 			FloorGeneratorActor->FloorProceduralMeshComponent->CustomDepthStencilValue = 2.0;
 
@@ -856,6 +857,7 @@ void AArchVizController::SelectBuildingComponentOnClick() {
 		}
 		else if (Cast<ARoofGenerator>(HitResult.GetActor())) {
 			RoofGeneratorActor = Cast<ARoofGenerator>(HitResult.GetActor());
+			RoofGeneratorActor->ApplyMaterialToRoofActor(RoofGeneratorActor->RoofMaterial);
 			RoofGeneratorActor->RoofProceduralMeshComponent->SetRenderCustomDepth(true);
 			RoofGeneratorActor->RoofProceduralMeshComponent->CustomDepthStencilValue = 2.0;
 			EditRoof();
@@ -924,6 +926,7 @@ void AArchVizController::EditWall() {
 			WallProcedural.Value.ProceduralMeshComponent->SetRenderCustomDepth(true);
 			WallProcedural.Value.ProceduralMeshComponent->CustomDepthStencilValue = 2.0;
 		}
+		WallGeneratorActor->ApplyMaterialToWallActor(WallGeneratorActor->WallMaterial);
 	}
 
 	// Door Editor Widgets
@@ -1028,27 +1031,27 @@ void AArchVizController::EditRoof() {
 	BuildingConstructionWidget->UpdateFloorLocationUnderCursorBtn->SetVisibility(ESlateVisibility::Hidden);
 }
 void AArchVizController::RemovePostProcessMaterial() {
-	if (RoadGeneratorActor) {
+	if (RoadGeneratorActor && RoadGeneratorActor->RoadProceduralMeshComponent) {
 		RoadGeneratorActor->RoadProceduralMeshComponent->SetRenderCustomDepth(false);
 	}
 	if (WallGeneratorActor) {
 		for (int i{}; i < WallGeneratorActor->WallStaticMeshComponentsArr.Num(); i++) {
-			WallGeneratorActor->WallStaticMeshComponentsArr[i]->SetRenderCustomDepth(false);
+			if(WallGeneratorActor->WallStaticMeshComponentsArr[i]) { WallGeneratorActor->WallStaticMeshComponentsArr[i]->SetRenderCustomDepth(false); }
 		}
 		for (auto& WallProcedural : WallGeneratorActor->WallActorMap) {
-			WallProcedural.Value.ProceduralMeshComponent->SetRenderCustomDepth(false);
+			if(WallProcedural.Value.ProceduralMeshComponent) {WallProcedural.Value.ProceduralMeshComponent->SetRenderCustomDepth(false);}
 		}
 	}
 	if (DoorHighlightComponent) {
 		DoorHighlightComponent->SetRenderCustomDepth(false);
 	}
-	if (FloorGeneratorActor) {
+	if (FloorGeneratorActor && FloorGeneratorActor->FloorProceduralMeshComponent) {
 		FloorGeneratorActor->FloorProceduralMeshComponent->SetRenderCustomDepth(false);
 	}
-	if (RoofGeneratorActor) {
+	if (RoofGeneratorActor && RoofGeneratorActor->RoofProceduralMeshComponent) {
 		RoofGeneratorActor->RoofProceduralMeshComponent->SetRenderCustomDepth(false);
 	}
-	if (InteriorDesignActor) {
+	if (InteriorDesignActor && InteriorDesignActor->InteriorStaticMeshComponent) {
 		InteriorDesignActor->InteriorStaticMeshComponent->SetRenderCustomDepth(false);
 	}
 }
@@ -1342,7 +1345,9 @@ void AArchVizController::GenerateDoorOnClick() {
 				else {
 					DoorComponent->SetRelativeRotation(FRotator(0, 90, 0));
 					DoorComponent->SetStaticMesh(DoorMesh);
+					//DoorComponent->SetMaterial(0, NONE);
 				}
+				DoorComponent->SetMaterial(0, nullptr);
 			}
 		}
 		else if (Cast<UProceduralMeshComponent>(HitResult.GetComponent())) {
@@ -1391,6 +1396,7 @@ void AArchVizController::OnDestroyDoorBtnClicked() {
 			FRotator FirstRotation = Component->GetRelativeRotation();
 			Component->SetRelativeRotation(FRotator(0, 0, 0));
 			Component->SetStaticMesh(WallGeneratorActor->WallStaticMesh);
+			Component->SetMaterial(0, WallGeneratorActor->WallMaterial);
 
 
 			FVector Location = Component->GetRelativeLocation();
@@ -1451,7 +1457,7 @@ void AArchVizController::CompleteBuildingFloor() {
 	FloorGeneratorActor = nullptr;
 }
 void AArchVizController::DestroyFloorPreviewActor() {
-	if (bShouldEditFloorLocationUnderCursor) {
+	if (FloorGeneratorActor && bShouldEditFloorLocationUnderCursor) {
 		FloorGeneratorActor->Destroy();
 		FloorGeneratorActor = nullptr;
 	}
