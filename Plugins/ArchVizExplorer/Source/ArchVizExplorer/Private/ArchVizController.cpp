@@ -1318,6 +1318,19 @@ void AArchVizController::SetWallStaticMesh(const FWallData& WallData) {
 		TempWallMesh = WallData.StaticMesh;
 		WallGeneratorActor->WallStaticMesh = TempWallMesh;
 		WallGeneratorActor->GenerateWall(BuildingConstructionWidget->NoSegmentsValue->GetValue());
+
+		for (int i{}; i < WallGeneratorActor->WallStaticMeshComponentsArr.Num(); i++) {
+			if (WallGeneratorActor->HeightOfWall == WallGeneratorActor->WallStaticMeshComponentsArr[i]->GetStaticMesh()->GetBounds().GetBox().GetSize().Z)
+			{
+				WallGeneratorActor->WallStaticMeshComponentsArr[i]->SetRenderCustomDepth(true);
+				WallGeneratorActor->WallStaticMeshComponentsArr[i]->CustomDepthStencilValue = 2.0;
+			}
+		}
+		for (auto& WallProcedural : WallGeneratorActor->WallActorMap) {
+			WallProcedural.Value.ProceduralMeshComponent->SetRenderCustomDepth(true);
+			WallProcedural.Value.ProceduralMeshComponent->CustomDepthStencilValue = 2.0;
+		}
+
 	}
 }
 void AArchVizController::OnDestroyWallBtnClicked() {
@@ -1981,6 +1994,7 @@ void AArchVizController::ShowSaveMenu() {
 void AArchVizController::ShowLoadMenu() {
 	SaveLoadWidget->LoadMenu->SetVisibility(ESlateVisibility::Visible);
 	SaveLoadWidget->SaveMenu->SetVisibility(ESlateVisibility::Hidden);
+	SaveLoadWidget->CloseLoadMenuBtn->SetVisibility(ESlateVisibility::Visible);
 
 	LoadSlotList();
 }
@@ -2148,6 +2162,9 @@ void AArchVizController::LoadSlotWithGivenName(const FText& SlotName) {
 			InteriorActor->InteriorStaticMesh = InteriorData.InteriorMesh;
 			InteriorActor->SetInteriorStaticMesh(InteriorActor->InteriorStaticMesh);
 		}
+		CurrentSelectedMode = EModeSelected::ViewMode;
+		HomeWidget->ModeSelectionDropdown->SetSelectedOption(FString("View Mode"));
+		OnModeSelectionChanged(FString("View Mode"), ESelectInfo::Direct);
 	}
 }
 void AArchVizController::ClearViewportBeforeLoad() {
@@ -2258,6 +2275,7 @@ void AArchVizController::ReplaceSlot() {
 		{
 			FWallSaveData WallData;
 			WallData.WallTransform = WallActor->GetActorTransform();
+			WallData.WallStaticMesh = WallActor->WallStaticMesh;
 			WallData.WallMaterial = WallActor->WallMaterial;
 			WallData.NoOfSegments = WallActor->SegmentsNo;
 			WallData.WallActorMap = WallActor->WallActorMap;
@@ -2331,6 +2349,7 @@ void AArchVizController::RewriteSlotName() {
 }
 void AArchVizController::ShowRenameMenu(const FText& FileName) {
 	SaveLoadWidget->RenameMenu->SetVisibility(ESlateVisibility::Visible);
+	SaveLoadWidget->CloseLoadMenuBtn->SetVisibility(ESlateVisibility::HitTestInvisible);
 	SaveLoadWidget->NewSlotNameTxt->SetText(FText::FromString(""));
 	SelectedSlotName = FileName.ToString();
 
@@ -2338,6 +2357,7 @@ void AArchVizController::ShowRenameMenu(const FText& FileName) {
 }
 void AArchVizController::HideRenameMenu() {
 	SaveLoadWidget->RenameMenu->SetVisibility(ESlateVisibility::Hidden);
+	SaveLoadWidget->CloseLoadMenuBtn->SetVisibility(ESlateVisibility::Visible);
 }
 void AArchVizController::RenameSlot() {
 	IFileManager& FileManager = IFileManager::Get();
