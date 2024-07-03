@@ -16,8 +16,10 @@
 #include "WallGenerator.h"
 #include "FloorGenerator.h"
 #include "RoofGenerator.h"
+#include "TemplateActor.h"
 #include "Engine/StaticMeshActor.h"
 
+#include "Widgets/StartMenuWidget.h"
 #include "Widgets/HomeWidget.h"
 #include "Widgets/RoadConstructionWidget.h"
 #include "Widgets/BuildingConstructionWidget.h"
@@ -76,6 +78,43 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	// Start Menu Widget
+	UPROPERTY()
+	UStartMenuWidget* StartMenuWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<UStartMenuWidget> StartMenuWidgetClassRef;
+	UPROPERTY()
+	FString SelectedTemplateName;
+	UPROPERTY()
+	ATemplateActor* TemplateActor;
+	UPROPERTY()
+	TArray<AActor*> IgnoreActorsForTemplateArray;
+	UPROPERTY()
+	UInputMappingContext* TemplateIMC;
+	// Function - Start Menu
+	UFUNCTION()
+	void SetupTemplateInputs();
+	UFUNCTION()
+	void PreviewTemplateActor();
+	UFUNCTION()
+	void PlaceTemplateOnClick();
+	UFUNCTION()
+	void RotateTemplate();
+	UFUNCTION()
+	void CreateBlankProject();
+	UFUNCTION()
+	void UpdateSelectedTemplate(FString SelectedItem, ESelectInfo::Type SelectionType);
+	UFUNCTION()
+	void LoadTemplateList();
+	UFUNCTION()
+	void ShowLoadTemplateMenu();
+	UFUNCTION()
+	void HideLoadTemplateMenu();
+	UFUNCTION()
+	void LoadTemplate();
+	UFUNCTION()
+	void LoadSelectedTemplate();
+
 	// Home Widget
 	UPROPERTY()
 	UHomeWidget* HomeWidget;
