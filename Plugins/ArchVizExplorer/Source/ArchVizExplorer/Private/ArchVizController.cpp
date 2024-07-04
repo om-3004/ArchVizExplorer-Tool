@@ -636,6 +636,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyDoorPreviewActor();
 		DestroyFloorPreviewActor();
 		DestroyInteriorPreviewActor();
+		DestroyBuildingTemplatePreview();
 
 		UpdateWidget();
 		UpdateInputMappings();
@@ -650,6 +651,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyDoorPreviewActor();
 		DestroyFloorPreviewActor();
 		DestroyInteriorPreviewActor();
+		DestroyBuildingTemplatePreview();
 
 		if (RoadConstructionWidgetClassRef) {
 			UpdateWidget();
@@ -683,6 +685,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyDoorPreviewActor();
 		DestroyFloorPreviewActor();
 		DestroyInteriorPreviewActor();
+		DestroyBuildingTemplatePreview();
 
 		if (MaterialSelectionWidgetClassRef) {
 			UpdateWidget();
@@ -698,6 +701,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyDoorPreviewActor();
 		DestroyFloorPreviewActor();
 		DestroyInteriorPreviewActor();
+		DestroyBuildingTemplatePreview();
 
 		if (InteriorDesignWidgetClassRef) {
 			UpdateWidget();
@@ -717,6 +721,7 @@ void AArchVizController::OnModeSelectionChanged(FString SelectedItem, ESelectInf
 		DestroyDoorPreviewActor();
 		DestroyFloorPreviewActor();
 		DestroyInteriorPreviewActor();
+		DestroyBuildingTemplatePreview();
 
 		if (SaveLoadWidgetClassRef) {
 			UpdateWidget();
@@ -1198,6 +1203,8 @@ void AArchVizController::OnWallBtnClicked() {
 
 	DestroyDoorPreviewActor();
 	DestroyFloorPreviewActor();
+	DestroyBuildingTemplatePreview();
+	DestroyBuildingTemplatePreview();
 
 	CurrentBuildingComponent = EBuildingComponent::Wall;
 	DestroyWallGeneratorActor();
@@ -1230,6 +1237,7 @@ void AArchVizController::OnDoorBtnClicked() {
 
 	CurrentBuildingComponent = EBuildingComponent::Door;
 	DestroyWallGeneratorActor();
+	DestroyBuildingTemplatePreview();
 	UpdateInputMappings();
 
 }
@@ -1246,6 +1254,7 @@ void AArchVizController::OnFloorBtnClicked() {
 
 	CurrentBuildingComponent = EBuildingComponent::Floor;
 	DestroyWallGeneratorActor();
+	DestroyBuildingTemplatePreview();
 	UpdateInputMappings();
 
 }
@@ -1254,6 +1263,7 @@ void AArchVizController::OnRoofBtnClicked() {
 	HomeWidget->PlayAnimation(HomeWidget->DisplayMsgAnim);
 
 	DestroyDoorPreviewActor();
+	DestroyBuildingTemplatePreview();
 
 	BuildingConstructionWidget->SegmentBox->SetVisibility(ESlateVisibility::Hidden);
 	BuildingConstructionWidget->WallScrollBoxWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -1290,6 +1300,7 @@ void AArchVizController::OnBuildingModeToggleBtnClicked()
 		
 		DestroyWallGeneratorActor();
 		DestroyDoorPreviewActor();
+		DestroyBuildingTemplatePreview();
 		bIsInBuildingEditorMode = true;
 		
 		CurrentBuildingMode = EBuildingMode::EditorMode;
@@ -1366,7 +1377,7 @@ void AArchVizController::OnBuildingModeToggleBtnClicked()
 	}
 }
 
-// Template
+// Building Template
 void AArchVizController::SetupTemplateInputs() {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
 		BuildingTemplateIMC = NewObject<UInputMappingContext>();
@@ -1419,6 +1430,8 @@ void AArchVizController::LoadTemplateList() {
 	}
 }
 void AArchVizController::UpdateSelectedTemplate(FString SelectedItem, ESelectInfo::Type SelectionType) {
+	DestroyBuildingTemplatePreview();
+
 	if (SelectedItem != "-- Select a Template --") {
 		SelectedTemplateName = SelectedItem;
 
@@ -1494,6 +1507,19 @@ void AArchVizController::LoadTemplate() {
 			IgnoreActorsForTemplateArray.Add(InteriorActor);
 			InteriorActor->AttachToActor(TemplateActor, FAttachmentTransformRules::KeepWorldTransform);
 		}
+	}
+}
+void AArchVizController::DestroyBuildingTemplatePreview() {
+	if (TemplateActor) {
+		TArray<AActor*> ChildrenActors;
+		TemplateActor->GetAttachedActors(ChildrenActors);
+		for (auto ChildActor : ChildrenActors) {
+			ChildActor->Destroy();
+			ChildActor = nullptr;
+		}
+
+		TemplateActor->Destroy();
+		TemplateActor = nullptr;
 	}
 }
 

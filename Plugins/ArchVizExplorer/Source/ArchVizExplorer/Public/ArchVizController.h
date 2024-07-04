@@ -117,6 +117,8 @@ private:
 	UFUNCTION()
 	void LoadTemplate();
 	UFUNCTION()
+	void DestroyBuildingTemplatePreview();
+	UFUNCTION()
 	void LoadSelectedProject();
 	UFUNCTION()
 	void UpdateSelectedProject(FString SelectedItem, ESelectInfo::Type SelectionType);
