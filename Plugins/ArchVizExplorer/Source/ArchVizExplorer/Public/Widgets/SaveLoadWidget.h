@@ -72,4 +72,25 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* RenamingSlotMsgTxt;
+
+	UPROPERTY(meta = (BindWidget))
+	UBorder* SlotTypeMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* NewSlotBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* ExisitingSlotBtn;
+	
+	UPROPERTY(meta = (BindWidget))
+	UButton* CloseSlotTypeMenuBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UBorder* SaveInExisitingSlotMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CloseSaveInExistingSlotMenuBtn;
+
+	UPROPERTY(meta = (BindWidget))
+	UScrollBox* SaveInExisitingSlotListScrollBox;
 };

@@ -27,6 +27,7 @@
 #include "Widgets/InteriorDesignWidget.h"
 #include "Widgets/SaveLoadWidget.h"
 #include "Widgets/SlotListWidget.h"
+#include "Widgets/SaveInExisitingSlotWidget.h"
 
 #include "ArchVizExplorerSaveGame.h"
 #include "Kismet/GameplayStatics.h"
@@ -56,6 +57,7 @@ enum class EBuildingComponent : uint8 {
 	Door,
 	Floor,
 	Roof,
+	Template,
 };
 
 UENUM(BlueprintType)
@@ -86,11 +88,11 @@ private:
 	UPROPERTY()
 	FString SelectedTemplateName;
 	UPROPERTY()
+	FString SelectedProjectName;
+	UPROPERTY()
 	ATemplateActor* TemplateActor;
 	UPROPERTY()
 	TArray<AActor*> IgnoreActorsForTemplateArray;
-	UPROPERTY()
-	UInputMappingContext* TemplateIMC;
 	// Function - Start Menu
 	UFUNCTION()
 	void SetupTemplateInputs();
@@ -103,17 +105,21 @@ private:
 	UFUNCTION()
 	void CreateBlankProject();
 	UFUNCTION()
+	void LoadProjectList();
+	UFUNCTION()
 	void UpdateSelectedTemplate(FString SelectedItem, ESelectInfo::Type SelectionType);
 	UFUNCTION()
 	void LoadTemplateList();
 	UFUNCTION()
-	void ShowLoadTemplateMenu();
+	void ShowLoadProjectMenu();
 	UFUNCTION()
-	void HideLoadTemplateMenu();
+	void HideLoadProjectMenu();
 	UFUNCTION()
 	void LoadTemplate();
 	UFUNCTION()
-	void LoadSelectedTemplate();
+	void LoadSelectedProject();
+	UFUNCTION()
+	void UpdateSelectedProject(FString SelectedItem, ESelectInfo::Type SelectionType);
 
 	// Home Widget
 	UPROPERTY()
@@ -366,6 +372,11 @@ private:
 	void OnRoofDimensionZValueChanged(float InValue);
 	UFUNCTION()
 	void OnDestroyRoofBtnClicked();
+	// Building Template
+	UPROPERTY()
+	UInputMappingContext* BuildingTemplateIMC;
+	UFUNCTION()
+	void OnTemplateBtnClicked();
 
 	// Material Selection Widget
 	UPROPERTY()
@@ -431,6 +442,11 @@ private:
 	TSubclassOf<USlotListWidget> SlotListWidgetClassRef;
 
 	UPROPERTY()
+	USaveInExisitingSlotWidget* SaveInExisitingSlotWidget;
+	UPROPERTY(EditAnywhere, Category = "ArchVizController | WidgetReference")
+	TSubclassOf<USaveInExisitingSlotWidget> SaveInExisitingSlotWidgetClassRef;
+
+	UPROPERTY()
 	FString SelectedSlotName;
 
 	UFUNCTION()
@@ -465,4 +481,17 @@ private:
 	void HideRenameMenu();
 	UFUNCTION()
 	void RenameSlot();
+
+	UFUNCTION()
+	void ShowSlotTypeMenu();
+	UFUNCTION()
+	void HideSlotTypeMenu();
+	UFUNCTION()
+	void LoadExistingSlotList();
+	UFUNCTION()
+	void ShowExistingSlotMenu();
+	UFUNCTION()
+	void SaveInExistingSlot(const FText& SlotName);
+	UFUNCTION()
+	void CloseExistingSlotMenu();
 };

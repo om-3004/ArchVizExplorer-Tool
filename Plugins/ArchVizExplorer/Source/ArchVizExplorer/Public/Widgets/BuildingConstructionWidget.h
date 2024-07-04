@@ -11,6 +11,7 @@
 #include "ScrollBoxWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Border.h"
+#include "Components/ComboBoxString.h"
 
 #include "BuildingConstructionWidget.generated.h"
 
@@ -29,9 +30,14 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UButton* RoofBtn;
 	UPROPERTY(meta = (BindWidget))
+	UButton* TemplateBtn;
+	UPROPERTY(meta = (BindWidget))
 	UButton* BuildingModeToggleBtn;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* BuildingModeToggleBtnText;
+	// Building Template
+	UPROPERTY(meta = (BindWidget))
+	UComboBoxString* TemplateListComboBox;
 
 	// Wall Generator
 	UPROPERTY(meta = (BindWidget))

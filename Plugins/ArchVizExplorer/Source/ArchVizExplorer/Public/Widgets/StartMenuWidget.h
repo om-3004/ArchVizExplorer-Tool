@@ -21,18 +21,18 @@ public:
 	UButton* BlankProjectBtn;
 
 	UPROPERTY(meta = (BindWidget))
-	UComboBoxString* TemplateListComboBox;
+	UComboBoxString* ProjectListComboBox;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* LoadTemplateBtn;
+	UButton* LoadProjectBtn;
 	
 	UPROPERTY(meta = (BindWidget))
 	UButton* LoadBtn;
 	
 	UPROPERTY(meta = (BindWidget))
-	UButton* CloseLoadTemplateBtn;
+	UButton* CloseLoadProjectBtn;
 
 	UPROPERTY(meta = (BindWidget))
-	UBorder* LoadTemplateMenu;
+	UBorder* LoadProjectMenu;
 
 };
