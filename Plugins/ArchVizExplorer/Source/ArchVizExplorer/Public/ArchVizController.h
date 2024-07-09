@@ -122,6 +122,8 @@ private:
 	void LoadSelectedProject();
 	UFUNCTION()
 	void UpdateSelectedProject(FString SelectedItem, ESelectInfo::Type SelectionType);
+	UFUNCTION()
+	void DisplayNotificationMsg(const FString& DisplayMsg);
 
 	// Home Widget
 	UPROPERTY()
